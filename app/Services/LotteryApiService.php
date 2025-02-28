@@ -32,22 +32,16 @@ class LotteryApiService
      */
     public function getResults(Carbon $date, string $region, ?string $province = null)
     {
-        // Chuẩn hóa mã vùng miền
-        $region = strtolower($region);
-        
         // Tạo cache key
-        $cacheKey = "lottery_results:{$region}:{$date->format('Y-m-d')}";
-        if ($province) {
-            $cacheKey .= ":{$province}";
-        }
+        $cacheKey = "lottery_results:{$date->format('Y-m-d')}:{$region}" . ($province ? ":{$province}" : "");
         
-        // Kiểm tra cache trước
+        // Kiểm tra cache
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
         
-        // Lấy kết quả từ nguồn chính (xoso.com.vn)
-        $results = $this->fetchFromXosoComVn($date, $region, $province);
+        // Lấy kết quả từ nguồn xosothantai.mobi
+        $results = $this->fetchFromXoSoThanTai($date, $region, $province);
         
         // Nếu có kết quả, lưu vào cache
         if ($results) {
@@ -59,18 +53,40 @@ class LotteryApiService
     }
     
     /**
-     * Lấy kết quả từ nguồn xoso.com.vn
+     * Lấy kết quả xổ số từ nguồn xosothantai.mobi
      */
-    private function fetchFromXosoComVn(Carbon $date, string $region, ?string $province = null)
+    private function fetchFromXoSoThanTai(Carbon $date, string $region, ?string $province = null)
     {
         try {
-            $dateStr = $date->format('Y-m-d');
-            $url = "https://xoso.com.vn/kqxs/{$region}-{$dateStr}.html";
+            $dateStr = $date->format('d-m-Y');
+            $formattedDate = $date->format('d-m-Y');
+            $day = $date->format('d');
+            $month = $date->format('m');
+            $year = $date->format('Y');
             
-            $response = $this->client->get($url);
+            // Xác định URL dựa vào vùng miền
+            $url = '';
+            if ($region === 'mb') {
+                $url = "https://xosothantai.mobi/embedded/kq-mienbac#n{$day}-{$month}-{$year}";
+            } elseif ($region === 'mn') {
+                $url = "https://xosothantai.mobi/embedded/kq-miennam#n{$day}-{$month}-{$year}";
+            } elseif ($region === 'mt') {
+                $url = "https://xosothantai.mobi/embedded/kq-mientrung#n{$day}-{$month}-{$year}";
+            }
+            
+            $response = $this->client->get($url, [
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                    'Accept-Language' => 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'Cache-Control' => 'no-cache',
+                    'Pragma' => 'no-cache',
+                    'Referer' => 'https://xosothantai.mobi/'
+                ]
+            ]);
             
             if ($response->getStatusCode() != 200) {
-                Log::warning('Failed to fetch lottery results from xoso.com.vn', [
+                Log::warning('Failed to fetch lottery results from xosothantai.mobi', [
                     'date' => $dateStr,
                     'region' => $region,
                     'province' => $province,
@@ -81,20 +97,49 @@ class LotteryApiService
             
             $html = (string) $response->getBody();
             
-            // Tìm bảng kết quả dựa trên HTML
+            // Log response để debug
+            Log::debug('Response from xosothantai.mobi', [
+                'url' => $url,
+                'status_code' => $response->getStatusCode(),
+                'headers' => $response->getHeaders(),
+                'body_length' => strlen($html),
+                'body_preview' => substr($html, 0, 500)
+            ]);
+            
+            // Chuyển đổi encoding
+            $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+            
+            // Parse kết quả dựa trên vùng miền
+            $results = null;
             switch ($region) {
                 case 'mb':
-                    return $this->parseMienBacResults($html);
+                    $results = $this->parseXoSoThanTaiMienBacResults($html);
+                    break;
                 case 'mn':
-                    return $this->parseMienNamResults($html, $province);
+                    $results = $this->parseXoSoThanTaiMienNamResults($html, $province);
+                    break;
                 case 'mt':
-                    return $this->parseMienTrungResults($html, $province);
+                    $results = $this->parseXoSoThanTaiMienTrungResults($html, $province);
+                    break;
                 default:
                     Log::warning('Invalid region code', ['region' => $region]);
                     return null;
             }
+            
+            // Kiểm tra kết quả có hợp lệ không
+            if (!$this->validateResults($results)) {
+                Log::warning('Invalid results format from xosothantai.mobi', [
+                    'date' => $date->format('Y-m-d'),
+                    'region' => $region,
+                    'province' => $province,
+                    'results' => $results
+                ]);
+                return null;
+            }
+            
+            return $results;
         } catch (\Exception $e) {
-            Log::error('Error fetching lottery results from xoso.com.vn: ' . $e->getMessage(), [
+            Log::error('Error fetching lottery results from xosothantai.mobi: ' . $e->getMessage(), [
                 'date' => $date->format('Y-m-d'),
                 'region' => $region,
                 'province' => $province,
@@ -104,236 +149,146 @@ class LotteryApiService
             return null;
         }
     }
-    
+
     /**
-     * Phân tích kết quả Miền Bắc từ xoso.com.vn
+     * Parse kết quả Miền Bắc từ xosothantai.mobi
      */
-    private function parseMienBacResults($html)
+    private function parseXoSoThanTaiMienBacResults($html)
     {
-        // Tạo DOMDocument để parse HTML
         $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
         @$dom->loadHTML($html);
+        libxml_clear_errors();
         $xpath = new DOMXPath($dom);
         
-        // Tìm bảng kết quả
-        $table = $xpath->query('//table[contains(@class, "table-result")]')->item(0);
-        
-        if (!$table) {
-            Log::warning('Could not find result table for Mien Bac');
-            return null;
-        }
-        
-        $results = [];
-        
-        // Lấy giải đặc biệt
-        $specialPrize = $xpath->query('.//tr[contains(@class, "db")]//td[contains(@class, "number")]', $table)->item(0);
-        if ($specialPrize) {
-            $results['special'] = trim($specialPrize->textContent);
-        }
-        
-        // Lấy giải nhất
-        $firstPrize = $xpath->query('.//tr[contains(@class, "g1")]//td[contains(@class, "number")]', $table)->item(0);
-        if ($firstPrize) {
-            $results['first'] = trim($firstPrize->textContent);
-        }
-        
-        // Lấy giải nhì
-        $secondPrizes = $xpath->query('.//tr[contains(@class, "g2")]//td[contains(@class, "number")]', $table);
-        if ($secondPrizes->length > 0) {
-            $results['second'] = [];
-            foreach ($secondPrizes as $prize) {
-                $results['second'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải ba
-        $thirdPrizes = $xpath->query('.//tr[contains(@class, "g3")]//td[contains(@class, "number")]', $table);
-        if ($thirdPrizes->length > 0) {
-            $results['third'] = [];
-            foreach ($thirdPrizes as $prize) {
-                $results['third'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải tư
-        $fourthPrizes = $xpath->query('.//tr[contains(@class, "g4")]//td[contains(@class, "number")]', $table);
-        if ($fourthPrizes->length > 0) {
-            $results['fourth'] = [];
-            foreach ($fourthPrizes as $prize) {
-                $results['fourth'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải năm
-        $fifthPrizes = $xpath->query('.//tr[contains(@class, "g5")]//td[contains(@class, "number")]', $table);
-        if ($fifthPrizes->length > 0) {
-            $results['fifth'] = [];
-            foreach ($fifthPrizes as $prize) {
-                $results['fifth'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải sáu
-        $sixthPrizes = $xpath->query('.//tr[contains(@class, "g6")]//td[contains(@class, "number")]', $table);
-        if ($sixthPrizes->length > 0) {
-            $results['sixth'] = [];
-            foreach ($sixthPrizes as $prize) {
-                $results['sixth'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải bảy
-        $seventhPrizes = $xpath->query('.//tr[contains(@class, "g7")]//td[contains(@class, "number")]', $table);
-        if ($seventhPrizes->length > 0) {
-            $results['seventh'] = [];
-            foreach ($seventhPrizes as $prize) {
-                $results['seventh'][] = trim($prize->textContent);
-            }
-        }
-        
-        return $results;
-    }
-    
-    /**
-     * Phân tích kết quả Miền Nam từ xoso.com.vn
-     */
-    private function parseMienNamResults($html, $province = null)
-    {
-        // Tạo DOMDocument để parse HTML
-        $dom = new DOMDocument();
-        @$dom->loadHTML($html);
-        $xpath = new DOMXPath($dom);
+        $results = [
+            'special_prize' => '',
+            'first_prize' => '',
+            'second_prize' => [],
+            'third_prize' => [],
+            'fourth_prize' => [],
+            'fifth_prize' => [],
+            'sixth_prize' => [],
+            'seventh_prize' => [],
+        ];
         
         // Tìm bảng kết quả
-        $tables = $xpath->query('//table[contains(@class, "table-result")]');
+        $table = $xpath->query("//table[contains(@class, 'table-result')]")->item(0);
+
+        dd($table);
         
-        if ($tables->length === 0) {
-            Log::warning('Could not find result tables for Mien Nam');
-            return null;
-        }
-        
-        // Nếu có mã tỉnh, chỉ lấy kết quả của tỉnh đó
-        if ($province) {
-            $provinceTable = null;
+        if ($table) {
+            // Lấy các giải thưởng
+            $prizes = [
+                'special_prize' => ".//tr[contains(@class, 'gdb')]//td[2]",
+                'first_prize' => ".//tr[contains(@class, 'g1')]//td[2]",
+                'second_prize' => ".//tr[contains(@class, 'g2')]//td[2]",
+                'third_prize' => ".//tr[contains(@class, 'g3')]//td[2]",
+                'fourth_prize' => ".//tr[contains(@class, 'g4')]//td[2]",
+                'fifth_prize' => ".//tr[contains(@class, 'g5')]//td[2]",
+                'sixth_prize' => ".//tr[contains(@class, 'g6')]//td[2]",
+                'seventh_prize' => ".//tr[contains(@class, 'g7')]//td[2]",
+            ];
             
-            // Tìm bảng chứa kết quả của tỉnh
-            foreach ($tables as $table) {
-                $title = $xpath->query('.//div[contains(@class, "title-bkqxs")]', $table)->item(0);
-                if ($title && stripos($title->textContent, $province) !== false) {
-                    $provinceTable = $table;
-                    break;
+            foreach ($prizes as $key => $xpath_query) {
+                $nodes = $xpath->query($xpath_query, $table);
+                foreach ($nodes as $node) {
+                    $number = trim($node->textContent);
+                    if ($number) {
+                        if (in_array($key, ['special_prize', 'first_prize'])) {
+                            $results[$key] = $number;
+                        } else {
+                            $results[$key][] = $number;
+                        }
+                    }
                 }
             }
             
-            if (!$provinceTable) {
-                Log::warning('Could not find result table for specified province', ['province' => $province]);
-                return null;
+            return $results;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Parse kết quả Miền Nam từ xosothantai.mobi
+     */
+    private function parseXoSoThanTaiMienNamResults($html, $province = null)
+    {
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        @$dom->loadHTML($html);
+        libxml_clear_errors();
+        $xpath = new DOMXPath($dom);
+        
+        $results = [
+            'eighth_prize' => '',
+            'seventh_prize' => '',
+            'sixth_prize' => [],
+            'fifth_prize' => '',
+            'fourth_prize' => [],
+            'third_prize' => [],
+            'second_prize' => '',
+            'first_prize' => '',
+            'special_prize' => '',
+        ];
+        
+        // Tìm bảng kết quả cho tỉnh cụ thể
+        $table = null;
+        if ($province) {
+            $tables = $xpath->query("//table[contains(@class, 'table-result')]");
+            foreach ($tables as $t) {
+                $header = $xpath->query(".//tr[contains(@class, 'tentinh')]", $t)->item(0);
+                if ($header && str_contains(strtolower($header->textContent), strtolower($province))) {
+                    $table = $t;
+                    break;
+                }
+            }
+        } else {
+            $table = $xpath->query("//table[contains(@class, 'table-result')]")->item(0);
+        }
+        
+        if ($table) {
+            // Lấy các giải thưởng
+            $prizes = [
+                'eighth_prize' => ".//tr[contains(@class, 'g8')]//td[2]",
+                'seventh_prize' => ".//tr[contains(@class, 'g7')]//td[2]",
+                'sixth_prize' => ".//tr[contains(@class, 'g6')]//td[2]",
+                'fifth_prize' => ".//tr[contains(@class, 'g5')]//td[2]",
+                'fourth_prize' => ".//tr[contains(@class, 'g4')]//td[2]",
+                'third_prize' => ".//tr[contains(@class, 'g3')]//td[2]",
+                'second_prize' => ".//tr[contains(@class, 'g2')]//td[2]",
+                'first_prize' => ".//tr[contains(@class, 'g1')]//td[2]",
+                'special_prize' => ".//tr[contains(@class, 'gdb')]//td[2]",
+            ];
+            
+            foreach ($prizes as $key => $xpath_query) {
+                $nodes = $xpath->query($xpath_query, $table);
+                foreach ($nodes as $node) {
+                    $number = trim($node->textContent);
+                    if ($number) {
+                        if (in_array($key, ['special_prize', 'first_prize', 'second_prize', 'fifth_prize', 'seventh_prize', 'eighth_prize'])) {
+                            $results[$key] = $number;
+                        } else {
+                            $results[$key][] = $number;
+                        }
+                    }
+                }
             }
             
-            // Phân tích kết quả từ bảng của tỉnh
-            return $this->parseSingleTable($provinceTable, $xpath);
+            return $results;
         }
         
-        // Nếu không có mã tỉnh, lấy kết quả từ bảng đầu tiên
-        return $this->parseSingleTable($tables->item(0), $xpath);
+        return null;
     }
-    
+
     /**
-     * Phân tích kết quả Miền Trung từ xoso.com.vn
+     * Parse kết quả Miền Trung từ xosothantai.mobi
      */
-    private function parseMienTrungResults($html, $province = null)
+    private function parseXoSoThanTaiMienTrungResults($html, $province = null)
     {
-        // Tương tự như phân tích Miền Nam
-        return $this->parseMienNamResults($html, $province);
-    }
-    
-    /**
-     * Phân tích kết quả từ một bảng xổ số đơn lẻ
-     */
-    private function parseSingleTable($table, $xpath)
-    {
-        if (!$table) {
-            return null;
-        }
-        
-        $results = [];
-        
-        // Lấy giải đặc biệt
-        $specialPrize = $xpath->query('.//tr[contains(@class, "db")]//td[contains(@class, "number")]', $table)->item(0);
-        if ($specialPrize) {
-            $results['special'] = trim($specialPrize->textContent);
-        }
-        
-        // Lấy giải nhất
-        $firstPrize = $xpath->query('.//tr[contains(@class, "g1")]//td[contains(@class, "number")]', $table)->item(0);
-        if ($firstPrize) {
-            $results['first'] = trim($firstPrize->textContent);
-        }
-        
-        // Lấy giải nhì
-        $secondPrizes = $xpath->query('.//tr[contains(@class, "g2")]//td[contains(@class, "number")]', $table);
-        if ($secondPrizes->length > 0) {
-            $results['second'] = [];
-            foreach ($secondPrizes as $prize) {
-                $results['second'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải ba
-        $thirdPrizes = $xpath->query('.//tr[contains(@class, "g3")]//td[contains(@class, "number")]', $table);
-        if ($thirdPrizes->length > 0) {
-            $results['third'] = [];
-            foreach ($thirdPrizes as $prize) {
-                $results['third'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải tư
-        $fourthPrizes = $xpath->query('.//tr[contains(@class, "g4")]//td[contains(@class, "number")]', $table);
-        if ($fourthPrizes->length > 0) {
-            $results['fourth'] = [];
-            foreach ($fourthPrizes as $prize) {
-                $results['fourth'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải năm
-        $fifthPrizes = $xpath->query('.//tr[contains(@class, "g5")]//td[contains(@class, "number")]', $table);
-        if ($fifthPrizes->length > 0) {
-            $results['fifth'] = [];
-            foreach ($fifthPrizes as $prize) {
-                $results['fifth'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải sáu
-        $sixthPrizes = $xpath->query('.//tr[contains(@class, "g6")]//td[contains(@class, "number")]', $table);
-        if ($sixthPrizes->length > 0) {
-            $results['sixth'] = [];
-            foreach ($sixthPrizes as $prize) {
-                $results['sixth'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải bảy
-        $seventhPrizes = $xpath->query('.//tr[contains(@class, "g7")]//td[contains(@class, "number")]', $table);
-        if ($seventhPrizes->length > 0) {
-            $results['seventh'] = [];
-            foreach ($seventhPrizes as $prize) {
-                $results['seventh'][] = trim($prize->textContent);
-            }
-        }
-        
-        // Lấy giải tám (nếu có)
-        $eighthPrizes = $xpath->query('.//tr[contains(@class, "g8")]//td[contains(@class, "number")]', $table);
-        if ($eighthPrizes->length > 0) {
-            $results['eighth'] = [];
-            foreach ($eighthPrizes as $prize) {
-                $results['eighth'][] = trim($prize->textContent);
-            }
-        }
-        
-        return $results;
+        // Sử dụng cùng logic với Miền Nam vì cấu trúc tương tự
+        return $this->parseXoSoThanTaiMienNamResults($html, $province);
     }
     
     /**
@@ -342,15 +297,15 @@ class LotteryApiService
     public function isResultComplete($results)
     {
         // Kiểm tra các giải quan trọng
-        if (empty($results['special']) || empty($results['first'])) {
+        if (empty($results['special_prize']) || empty($results['first_prize'])) {
             return false;
         }
         
         // Kiểm tra số lượng giải
         if (
-            (isset($results['second']) && count($results['second']) < 1) ||
-            (isset($results['third']) && count($results['third']) < 1) ||
-            (isset($results['fourth']) && count($results['fourth']) < 1)
+            (isset($results['second_prize']) && count($results['second_prize']) < 1) ||
+            (isset($results['third_prize']) && count($results['third_prize']) < 1) ||
+            (isset($results['fourth_prize']) && count($results['fourth_prize']) < 1)
         ) {
             return false;
         }
@@ -448,5 +403,26 @@ class LotteryApiService
         }
         
         return $count;
+    }
+    
+    /**
+     * Validate kết quả
+     */
+    private function validateResults($results)
+    {
+        // Kiểm tra các giải thưởng
+        $requiredPrizes = ['special_prize', 'first_prize', 'second_prize', 'third_prize', 'fourth_prize', 'fifth_prize', 'sixth_prize', 'seventh_prize'];
+        foreach ($requiredPrizes as $prize) {
+            if (!isset($results[$prize])) {
+                return false;
+            }
+        }
+        
+        // Kiểm tra số lượng giải
+        if (count($results['second_prize']) < 1 || count($results['third_prize']) < 1 || count($results['fourth_prize']) < 1) {
+            return false;
+        }
+        
+        return true;
     }
 }

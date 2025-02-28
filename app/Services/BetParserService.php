@@ -9,7 +9,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
-
 class BetParserService
 {
     public function parse($input, $betDate = null, User $customer = null)
@@ -116,12 +115,14 @@ class BetParserService
                 $standardBetType = 'lo'; // Lô
             } elseif ($betType == '3c') {
                 $standardBetType = '3c'; // 3 càng
-            } elseif (in_array($betType, ['da', 'xien', 'x'])) {
+            } elseif ($betType == '4c') {
+                $standardBetType = '4c'; // 4 càng
+            } elseif ($betType == 'da') {
                 if ($region == 'mb') {
                     $standardBetType = 'da'; // Đá (Miền Bắc)
                 } else {
                     // Phân biệt đá xiên và đá thẳng
-                    if (stripos($input, 'thang') !== false || stripos($input, 'th') !== false) {
+                    if (strpos($betType, 'dt') !== false) {
                         $standardBetType = 'da_thang'; // Đá thẳng (Miền Nam/Trung)
                     } else {
                         $standardBetType = 'da_xien'; // Đá xiên (Miền Nam/Trung)
@@ -129,9 +130,9 @@ class BetParserService
                 }
             } elseif (preg_match('/xien(\d)/i', $betType, $xienMatches) || preg_match('/x(\d)/i', $betType, $xienMatches)) {
                 // Xử lý xiên 2, xiên 3, xiên 4, xiên 5, xiên 6 (Miền Bắc)
-                $xienlevel = intval($xienMatches[1]);
-                if ($xienlevel >= 2 && $xienlevel <= 6) {
-                    $standardBetType = 'xien' . $xienlevel;
+                $xienLevel = intval($xienMatches[1]);
+                if ($xienLevel >= 2 && $xienLevel <= 6) {
+                    $standardBetType = 'xien' . $xienLevel;
                 } else {
                     $result['error'] = "Kiểu đánh xiên không hợp lệ: {$betType}";
                     return $result;
@@ -150,21 +151,32 @@ class BetParserService
                 // Áp dụng cài đặt giá cả
                 if ($customer && $customer->setting) {
                     $settings = $customer->setting;
-                    $payoutRatio = $this->getPayoutRatio($standardBetType, $region, $settings);
-                    $result['payout_ratio'] = $payoutRatio;
+                    
+                    // Lấy tỷ lệ thu (rate) và lần ăn (win) dựa vào loại cược và khu vực
+                    $collectionRate = $this->getCollectionRate($standardBetType, $region, $settings);
+                    $winMultiplier = $this->getWinMultiplier($standardBetType, $region, $settings);
+                    
+                    // Tính tiền thu từ khách
+                    $collectedAmount = $result['amount'] * $collectionRate;
+                    
+                    // Lưu vào kết quả
+                    $result['collection_rate'] = $collectionRate;
+                    $result['win_multiplier'] = $winMultiplier;
+                    $result['collected_amount'] = $collectedAmount;
+                    
+                    // Tính tiền thắng tiềm năng = Tiền thu * Lần ăn
+                    $result['potential_win'] = $collectedAmount * $winMultiplier;
                 } else {
                     // Nếu không có khách hàng hoặc không có cài đặt, sử dụng tỷ lệ mặc định
-                    $result['payout_ratio'] = $betTypeModel->payout_ratio;
+                    $result['collection_rate'] = 1.0;
+                    $result['win_multiplier'] = $betTypeModel->payout_ratio;
+                    $result['collected_amount'] = $result['amount'];
+                    $result['potential_win'] = $result['amount'] * $betTypeModel->payout_ratio;
                     Log::debug($betTypeModel->payout_ratio);
                 }
             } else {
                 $result['error'] = "Không tìm thấy kiểu đánh {$betType} trong hệ thống";
                 return $result;
-            }
-            
-            // Tính tiền thắng tiềm năng
-            if (isset($result['payout_ratio'])) {
-                $result['potential_win'] = $result['amount'] * $result['payout_ratio'];
             }
             
             $result['is_valid'] = true;
@@ -173,10 +185,76 @@ class BetParserService
         return $result;
     }
     
-    // Hàm lấy tỷ lệ thắng dựa vào loại cược và vùng
-    private function getPayoutRatio($betType, $region, $settings)
+    // Hàm lấy tỷ lệ thu dựa vào loại cược và vùng
+    private function getCollectionRate($betType, $region, $settings)
     {
-        // Tỷ lệ thắng dựa vào cài đặt của khách hàng
+        // Tỷ lệ thu dựa vào cài đặt của khách hàng
+        switch ($region) {
+            case 'mn': // Miền Nam
+                if ($betType == 'de') {
+                    return $settings->south_head_tail_rate;
+                } elseif ($betType == 'lo') {
+                    return $settings->south_lo_rate;
+                } elseif ($betType == '3c') {
+                    return $settings->south_3_digits_rate;
+                } elseif ($betType == '4c') {
+                    return $settings->south_4_digits_rate;
+                } elseif ($betType == 'da_xien') {
+                    return $settings->south_slide_rate;
+                } elseif ($betType == 'da_thang') {
+                    return $settings->south_straight_rate;
+                }
+                break;
+                
+            case 'mb': // Miền Bắc
+                if ($betType == 'de') {
+                    return $settings->north_head_tail_rate;
+                } elseif ($betType == 'lo') {
+                    return $settings->north_lo_rate;
+                } elseif ($betType == '3c') {
+                    return $settings->north_3_digits_rate;
+                } elseif ($betType == '4c') {
+                    return $settings->north_4_digits_rate;
+                } elseif ($betType == 'da') {
+                    return $settings->north_slide_rate;
+                } elseif ($betType == 'xien2') {
+                    return $settings->north_slide2_rate;
+                } elseif ($betType == 'xien3') {
+                    return $settings->north_slide3_rate;
+                } elseif ($betType == 'xien4') {
+                    return $settings->north_slide4_rate;
+                } elseif ($betType == 'xien5') {
+                    return $settings->north_slide5_rate;
+                } elseif ($betType == 'xien6') {
+                    return $settings->north_slide6_rate;
+                }
+                break;
+                
+            case 'mt': // Miền Trung
+                if ($betType == 'de') {
+                    return $settings->central_head_tail_rate;
+                } elseif ($betType == 'lo') {
+                    return $settings->central_lo_rate;
+                } elseif ($betType == '3c') {
+                    return $settings->central_3_digits_rate;
+                } elseif ($betType == '4c') {
+                    return $settings->central_4_digits_rate;
+                } elseif ($betType == 'da_xien') {
+                    return $settings->central_slide_rate;
+                } elseif ($betType == 'da_thang') {
+                    return $settings->central_straight_rate;
+                }
+                break;
+        }
+        
+        // Giá trị mặc định nếu không tìm thấy cài đặt
+        return 1.0;
+    }
+    
+    // Hàm lấy lần ăn dựa vào loại cược và vùng
+    private function getWinMultiplier($betType, $region, $settings)
+    {
+        // Lần ăn dựa vào cài đặt của khách hàng
         switch ($region) {
             case 'mn': // Miền Nam
                 if ($betType == 'de') {
@@ -238,6 +316,16 @@ class BetParserService
         
         // Giá trị mặc định nếu không tìm thấy cài đặt
         return 1.0;
+    }
+    
+    // Hàm lấy tỷ lệ thắng dựa vào loại cược và vùng (để tương thích với code cũ)
+    private function getPayoutRatio($betType, $region, $settings)
+    {
+        // Tỷ lệ thắng = Tỷ lệ thu * Lần ăn
+        $collectionRate = $this->getCollectionRate($betType, $region, $settings);
+        $winMultiplier = $this->getWinMultiplier($betType, $region, $settings);
+        
+        return $collectionRate * $winMultiplier;
     }
     
     private function getVietnameseDayOfWeek($dayOfWeek)

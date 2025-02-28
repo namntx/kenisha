@@ -4,13 +4,12 @@ use App\Http\Controllers\BetController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LotteryResultController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\LotteryApiController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\CustomerController;
-
+use App\Http\Controllers\DailySummaryController;
+use App\Http\Controllers\ProvinceController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -43,8 +42,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
      // Tổng kết ngày
-    Route::get('/daily-summary', [DailySummaryController::class, 'index'])->name('daily-summary.index');
-    Route::get('/daily-summary/customer/{customer}', [DailySummaryController::class, 'customer'])->name('daily-summary.customer');
+    Route::get('/daily-summary', [\App\Http\Controllers\DailySummaryController::class, 'index'])->name('daily-summary.index');
+    Route::get('/daily-summary/customer/{customer}', [\App\Http\Controllers\DailySummaryController::class, 'customer'])->name('daily-summary.customer');
     
     // Quản lý khách hàng (dành cho Agent)
     Route::middleware(['role:Agent'])->group(function () {
@@ -68,14 +67,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/lottery-results/{id}/process', [LotteryResultController::class, 'process'])->name('lottery-results.process');
     
     // Báo cáo
+    
     Route::get('/reports/daily', [ReportController::class, 'daily'])->name('reports.daily');
     Route::get('/reports/weekly', [ReportController::class, 'weekly'])->name('reports.weekly');
     Route::get('/reports/monthly', [ReportController::class, 'monthly'])->name('reports.monthly');
     Route::get('/reports/by-customer', [ReportController::class, 'byCustomer'])->name('reports.by-customer');
     
+    
     // Quản lý người dùng (Admin)
     Route::middleware(['role:Admin'])->group(function () {
+        /*
         Route::resource('users', UserController::class);
+        */
         Route::resource('provinces', ProvinceController::class);
     });
     

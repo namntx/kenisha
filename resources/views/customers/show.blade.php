@@ -53,7 +53,7 @@
                 </div>
                 
             <!-- Thống kê cược -->
-            <div class="bg-white rounded-lg shadow p-6 col-span-1"> x
+            <div class="bg-white rounded-lg shadow p-6 col-span-1">
                     <h2 class="text-lg font-medium text-gray-700 mb-4">Thống kê đặt cược</h2>
                     <dl class="space-y-3">
                         <div class="grid grid-cols-3 gap-4">

@@ -307,7 +307,12 @@
             }
             
             fetch(apiUrl)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     // Ẩn loading
                     loadingResults.classList.add('hidden');
@@ -334,11 +339,31 @@
                 .catch(error => {
                     // Ẩn loading
                     loadingResults.classList.add('hidden');
-                    
+                    console.log(error);
                     // Hiển thị thông báo lỗi
                     apiMessage.className = 'mb-4 p-4 rounded-md bg-red-50 text-red-700 border border-red-200';
-                    apiMessage.innerHTML = `<p>Đã xảy ra lỗi: ${error.message}</p>`;
+                    
+                    // Hiển thị thông báo lỗi chi tiết hơn
+                    let errorMessage = 'Đã xảy ra lỗi: ' + error.message;
+                    
+                    // Thêm nút thử lại
+                    apiMessage.innerHTML = `
+                        <p>${errorMessage}</p>
+                        <div class="mt-3">
+                            <button id="retryFetchBtn" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+                                Thử lại
+                            </button>
+                        </div>
+                    `;
                     apiMessage.classList.remove('hidden');
+                    
+                    // Thêm sự kiện cho nút thử lại
+                    document.getElementById('retryFetchBtn').addEventListener('click', function() {
+                        // Đóng modal
+                        fetchResultsModal.classList.add('hidden');
+                        // Ẩn thông báo lỗi
+                        apiMessage.classList.add('hidden');
+                    });
                 });
         });
     });

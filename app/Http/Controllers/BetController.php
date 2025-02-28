@@ -118,6 +118,18 @@ class BetController extends Controller
                 $bet->bet_date = $betDate->format('Y-m-d');
                 $bet->numbers = $number;
                 $bet->amount = $parsed['amount'];
+                
+                // Lưu thông tin tỷ lệ thu, lần ăn và tiền thu
+                if (isset($parsed['collection_rate'])) {
+                    $bet->collection_rate = $parsed['collection_rate'];
+                }
+                if (isset($parsed['win_multiplier'])) {
+                    $bet->win_multiplier = $parsed['win_multiplier'];
+                }
+                if (isset($parsed['collected_amount'])) {
+                    $bet->collected_amount = $parsed['collected_amount'];
+                }
+                
                 $bet->potential_win = $parsed['potential_win'];
                 $bet->raw_input = $parsed['raw_input'];
                 $bet->save();
@@ -176,6 +188,18 @@ class BetController extends Controller
                 $bet->bet_date = $betDate->format('Y-m-d');
                 $bet->numbers = $number;
                 $bet->amount = $parsed['amount'];
+                
+                // Lưu thông tin tỷ lệ thu, lần ăn và tiền thu
+                if (isset($parsed['collection_rate'])) {
+                    $bet->collection_rate = $parsed['collection_rate'];
+                }
+                if (isset($parsed['win_multiplier'])) {
+                    $bet->win_multiplier = $parsed['win_multiplier'];
+                }
+                if (isset($parsed['collected_amount'])) {
+                    $bet->collected_amount = $parsed['collected_amount'];
+                }
+                
                 $bet->potential_win = $parsed['potential_win'];
                 $bet->raw_input = $parsed['raw_input'];
                 $bet->save();

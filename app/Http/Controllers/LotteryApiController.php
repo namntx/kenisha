@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Province;
@@ -17,7 +17,7 @@ class LotteryApiController extends Controller
     protected $lotteryApiService;
     protected $lotteryProcessor;
     
-    public function __construct(LotteryApiService $lotteryApiService, LotteryProcessor $lotteryProcessor)
+    public function __construct(LotteryApiService $lotteryApiService, LotteryProcessorService $lotteryProcessor)
     {
         $this->lotteryApiService = $lotteryApiService;
         $this->lotteryProcessor = $lotteryProcessor;

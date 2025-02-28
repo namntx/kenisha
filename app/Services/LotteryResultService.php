@@ -13,7 +13,7 @@ class LotteryResultController extends Controller
 {
     protected $lotteryProcessor;
     
-    public function __construct(LotteryProcessor $lotteryProcessor)
+    public function __construct(LotteryProcessorService $lotteryProcessor)
     {
         $this->lotteryProcessor = $lotteryProcessor;
     }
