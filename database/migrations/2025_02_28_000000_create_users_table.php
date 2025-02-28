@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->foreignId('role_id')->constrained();
-            $table->foreignId('agent_id')->nullable()->after('role_id')->constrained('users');
+            $table->foreignId('agent_id')->nullable()->constrained('users');
             $table->decimal('balance', 12, 2)->default(0);
             $table->json('settings')->nullable();
             $table->rememberToken();

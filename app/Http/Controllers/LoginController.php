@@ -1,36 +1,61 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    use AuthenticatesUsers;
-
-    protected $redirectTo = RouteServiceProvider::HOME;
-
-    public function __construct()
+    /**
+     * Hiển thị form đăng nhập
+     */
+    public function showLoginForm()
     {
-        $this->middleware('guest')->except('logout');
+        return view('auth.login');
     }
 
-    // Chỉ cho phép đăng nhập cho Admin và Agent
-    protected function authenticated(Request $request, $user)
+    /**
+     * Xử lý đăng nhập
+     */
+    public function login(Request $request)
     {
-        if ($user->isCustomer()) {
-            // Đăng xuất nếu là khách hàng
-            $this->guard()->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            
-            return redirect()->route('login')
-                ->with('error', 'Khách hàng không được phép đăng nhập vào hệ thống. Vui lòng liên hệ đại lý của bạn.');
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        // Thử đăng nhập
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            // Đăng nhập thành công, tạo lại session
+            $request->session()->regenerate();
+
+            // Chuyển hướng đến trang dashboard
+            return redirect()->intended('dashboard');
         }
+
+        // Đăng nhập thất bại
+        throw ValidationException::withMessages([
+            'email' => __('auth.failed'),
+        ]);
+    }
+
+    /**
+     * Đăng xuất
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        // Hủy session
+        $request->session()->invalidate();
         
-        return redirect()->intended($this->redirectPath());
+        // Tạo lại token CSRF
+        $request->session()->regenerateToken();
+
+        // Chuyển hướng về trang chủ
+        return redirect('/');
     }
 }

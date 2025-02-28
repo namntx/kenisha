@@ -7,12 +7,35 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LotteryApiController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\CustomerController;
+
+
 use Illuminate\Support\Facades\Route;
 
 // Trang chủ
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('login', [LoginController::class, 'showLoginForm'])
+        ->name('login');
+    
+// Xử lý đăng nhập
+Route::post('login', [LoginController::class, 'login']);
+
+// Trang đăng ký
+Route::get('register', [RegisterController::class, 'showRegistrationForm'])
+    ->name('register');
+
+// Xử lý đăng ký
+Route::post('register', [RegisterController::class, 'register']);
+
+// Đăng xuất - Thêm route này
+Route::post('logout', [LoginController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
 // routes/web.php
 Route::middleware(['auth'])->group(function () {
@@ -29,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/customers/{customer}/adjust-balance', [CustomerController::class, 'adjustBalance'])->name('customers.adjust-balance');
         Route::get('/customers/{customer}/bet', [CustomerController::class, 'betForCustomer'])->name('customers.bet');
         Route::post('/customers/{customer}/bet', [BetController::class, 'storeForCustomer'])->name('customers.bet.store');
+        Route::get('/provinces/by-date', [App\Http\Controllers\BetController::class, 'getProvincesByDate'])->name('provinces.by-date');
     });
     
     // Quản lý cược (đối với Agent là xem các vé đã đặt)
@@ -58,6 +82,7 @@ Route::middleware(['auth'])->group(function () {
     // Hồ sơ người dùng
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
 });
 
 // require __DIR__.'/auth.php';

@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('regions', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('code'); // Thêm trường code
+            $table->string('description')->nullable(); // Để description có thể null
             $table->timestamps();
         });
     }

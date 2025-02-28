@@ -143,8 +143,11 @@
                 </div>
             `;
             
-            fetch(`{{ route('provinces.by-date') }}?date=${date}`)
-                .then(response => response.json())
+            fetch(`{{ route('provinces.by-date') }}?date=${date}`, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            }).then(response => response.json())
                 .then(data => {
                     provinceList.innerHTML = '';
                     

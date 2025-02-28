@@ -1,53 +1,60 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Role;
-use App\Providers\RouteServiceProvider;
 use App\Models\User;
-use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
-    use RegistersUsers;
-
-    protected $redirectTo = RouteServiceProvider::HOME;
-
-    public function __construct()
+    /**
+     * Hiển thị form đăng ký
+     */
+    public function showRegistrationForm()
     {
-        $this->middleware('guest');
+        return view('auth.register');
     }
 
-    protected function validator(array $data)
+    /**
+     * Xử lý đăng ký
+     */
+    public function register(Request $request)
     {
-        return Validator::make($data, [
+        // Validate dữ liệu đầu vào
+        $validatedData = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
-    }
 
-    protected function create(array $data)
-    {
         // Tìm role "Agent"
         $agentRole = Role::where('name', 'Agent')->first();
         
         if (!$agentRole) {
             // Fallback nếu không tìm thấy
-            abort(500, 'Không tìm thấy role "Agent" trong hệ thống');
+            return back()->with('error', 'Không tìm thấy role "Agent" trong hệ thống');
         }
         
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
-            'password' => Hash::make($data['password']),
+        // Tạo user mới
+        $user = User::create([
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'phone' => $validatedData['phone'] ?? null,
+            'password' => Hash::make($validatedData['password']),
             'role_id' => $agentRole->id, // Đăng ký mặc định sẽ là Agent
             'balance' => 0,
         ]);
+
+        // Đăng nhập user ngay sau khi đăng ký
+        auth()->login($user);
+
+        // Chuyển hướng đến dashboard
+        return redirect()->route('dashboard')
+            ->with('success', 'Đăng ký tài khoản thành công');
     }
 }

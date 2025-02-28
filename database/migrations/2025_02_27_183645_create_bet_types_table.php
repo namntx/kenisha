@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('code'); // de, lo, 3c, etc.
-            $table->decimal('payout_ratio', 8, 2);
             $table->string('description')->nullable();
             $table->timestamps();
         });
