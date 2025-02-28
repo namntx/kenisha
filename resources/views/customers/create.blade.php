@@ -18,7 +18,7 @@
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700">Tên khách hàng</label>
                         <input type="text" id="name" name="name" value="{{ old('name') }}" required
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         @error('name')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -28,7 +28,7 @@
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                         <input type="email" id="email" name="email" value="{{ old('email') }}" required
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         @error('email')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -38,7 +38,7 @@
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700">Số điện thoại</label>
                         <input type="text" id="phone" name="phone" value="{{ old('phone') }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         @error('phone')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -48,14 +48,14 @@
                     <div>
                         <label for="note" class="block text-sm font-medium text-gray-700">Ghi chú</label>
                         <input type="text" id="note" name="note" value="{{ old('note') }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Mật khẩu -->
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">Mật khẩu</label>
                         <input type="password" id="password" name="password" required
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         @error('password')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -65,7 +65,7 @@
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Xác nhận mật khẩu</label>
                         <input type="password" id="password_confirmation" name="password_confirmation" required
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                 </div>
             </div>
@@ -89,28 +89,28 @@
                     <div>
                         <label for="cashback_all" class="block text-sm font-medium text-gray-700">% Hồi Cả Ngày</label>
                         <input type="text" id="cashback_all" name="cashback_all" value="{{ old('cashback_all', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- % Hồi Miền Nam -->
                     <div>
                         <label for="cashback_south" class="block text-sm font-medium text-gray-700">% Hồi Miền Nam</label>
                         <input type="text" id="cashback_south" name="cashback_south" value="{{ old('cashback_south', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- % Hồi Miền Bắc -->
                     <div>
                         <label for="cashback_north" class="block text-sm font-medium text-gray-700">% Hồi Miền Bắc</label>
                         <input type="text" id="cashback_north" name="cashback_north" value="{{ old('cashback_north', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- % Hồi Miền Trung -->
                     <div>
                         <label for="cashback_central" class="block text-sm font-medium text-gray-700">% Hồi Miền Trung</label>
                         <input type="text" id="cashback_central" name="cashback_central" value="{{ old('cashback_central', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                 </div>
             </div>
@@ -124,98 +124,98 @@
                     <div>
                         <label for="south_head_tail_rate" class="block text-sm font-medium text-gray-700">Giá cò 2 Con Đầu - Đuôi MN</label>
                         <input type="text" id="south_head_tail_rate" name="south_head_tail_rate" value="{{ old('south_head_tail_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá Cò 2 Con lô MN -->
                     <div>
                         <label for="south_lo_rate" class="block text-sm font-medium text-gray-700">Giá Cò 2 Con lô MN</label>
                         <input type="text" id="south_lo_rate" name="south_lo_rate" value="{{ old('south_lo_rate', 21.9) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò 3 Con MN -->
                     <div>
                         <label for="south_3_digits_rate" class="block text-sm font-medium text-gray-700">Giá cò 3 Con MN</label>
                         <input type="text" id="south_3_digits_rate" name="south_3_digits_rate" value="{{ old('south_3_digits_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò Xỉu Chủ MN -->
                     <div>
                         <label for="south_3_head_tail_rate" class="block text-sm font-medium text-gray-700">Giá cò Xỉu Chủ MN (3 con đầu đuôi)</label>
                         <input type="text" id="south_3_head_tail_rate" name="south_3_head_tail_rate" value="{{ old('south_3_head_tail_rate', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò 4 Con MN -->
                     <div>
                         <label for="south_4_digits_rate" class="block text-sm font-medium text-gray-700">Giá cò 4 Con MN</label>
                         <input type="text" id="south_4_digits_rate" name="south_4_digits_rate" value="{{ old('south_4_digits_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá Cò Ðá Xiên MN -->
                     <div>
                         <label for="south_slide_rate" class="block text-sm font-medium text-gray-700">Giá Cò Ðá Xiên MN</label>
                         <input type="text" id="south_slide_rate" name="south_slide_rate" value="{{ old('south_slide_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá Cò Đá Thẳng MN -->
                     <div>
                         <label for="south_straight_rate" class="block text-sm font-medium text-gray-700">Giá Cò Đá Thẳng MN</label>
                         <input type="text" id="south_straight_rate" name="south_straight_rate" value="{{ old('south_straight_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 2 Con Đầu - Đuôi MN -->
                     <div>
                         <label for="south_head_tail_win" class="block text-sm font-medium text-gray-700">Trúng 2 Con Đầu - Đuôi MN</label>
                         <input type="text" id="south_head_tail_win" name="south_head_tail_win" value="{{ old('south_head_tail_win', 75) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 2 Con lô MN -->
                     <div>
                         <label for="south_lo_win" class="block text-sm font-medium text-gray-700">Trúng 2 Con lô MN</label>
                         <input type="text" id="south_lo_win" name="south_lo_win" value="{{ old('south_lo_win', 75) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 3 Con MN -->
                     <div>
                         <label for="south_3_digits_win" class="block text-sm font-medium text-gray-700">Trúng 3 Con MN</label>
                         <input type="text" id="south_3_digits_win" name="south_3_digits_win" value="{{ old('south_3_digits_win', 650) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng Xỉu Chủ MN -->
                     <div>
                         <label for="south_3_head_tail_win" class="block text-sm font-medium text-gray-700">Trúng Xỉu Chủ MN (3 con đầu đuôi)</label>
                         <input type="text" id="south_3_head_tail_win" name="south_3_head_tail_win" value="{{ old('south_3_head_tail_win', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 4 Con MN -->
                     <div>
                         <label for="south_4_digits_win" class="block text-sm font-medium text-gray-700">Trúng 4 Con MN</label>
                         <input type="text" id="south_4_digits_win" name="south_4_digits_win" value="{{ old('south_4_digits_win', 5500) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng Đá Xiên MN -->
                     <div>
                         <label for="south_slide_win" class="block text-sm font-medium text-gray-700">Trúng Đá Xiên MN</label>
                         <input type="text" id="south_slide_win" name="south_slide_win" value="{{ old('south_slide_win', 550) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng Đá Thẳng MN -->
                     <div>
                         <label for="south_straight_win" class="block text-sm font-medium text-gray-700">Trúng Đá Thẳng MN</label>
                         <input type="text" id="south_straight_win" name="south_straight_win" value="{{ old('south_straight_win', 750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Thưởng Đá Thẳng MN -->
@@ -284,84 +284,84 @@
                     <div>
                         <label for="north_head_tail_rate" class="block text-sm font-medium text-gray-700">Giá cò 2 Con Đầu - Đuôi MB</label>
                         <input type="text" id="north_head_tail_rate" name="north_head_tail_rate" value="{{ old('north_head_tail_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá Cò 2 Con lô MB -->
                     <div>
                         <label for="north_lo_rate" class="block text-sm font-medium text-gray-700">Giá Cò 2 Con lô MB</label>
                         <input type="text" id="north_lo_rate" name="north_lo_rate" value="{{ old('north_lo_rate', 21.9) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò 3 Con MB -->
                     <div>
                         <label for="north_3_digits_rate" class="block text-sm font-medium text-gray-700">Giá cò 3 Con MB</label>
                         <input type="text" id="north_3_digits_rate" name="north_3_digits_rate" value="{{ old('north_3_digits_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò Xỉu Chủ MB -->
                     <div>
                         <label for="north_3_head_tail_rate" class="block text-sm font-medium text-gray-700">Giá cò Xỉu Chủ MB (3 con đầu đuôi)</label>
                         <input type="text" id="north_3_head_tail_rate" name="north_3_head_tail_rate" value="{{ old('north_3_head_tail_rate', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò 4 Con MB -->
                     <div>
                         <label for="north_4_digits_rate" class="block text-sm font-medium text-gray-700">Giá cò 4 Con MB</label>
                         <input type="text" id="north_4_digits_rate" name="north_4_digits_rate" value="{{ old('north_4_digits_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá Cò Đá MB -->
                     <div>
                         <label for="north_slide_rate" class="block text-sm font-medium text-gray-700">Giá Cò Đá MB</label>
                         <input type="text" id="north_slide_rate" name="north_slide_rate" value="{{ old('north_slide_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 2 Con Đầu - Đuôi MB -->
                     <div>
                         <label for="north_head_tail_win" class="block text-sm font-medium text-gray-700">Trúng 2 Con Đầu - Đuôi MB</label>
                         <input type="text" id="north_head_tail_win" name="north_head_tail_win" value="{{ old('north_head_tail_win', 75) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 2 Con lô MB -->
                     <div>
                         <label for="north_lo_win" class="block text-sm font-medium text-gray-700">Trúng 2 Con lô MB</label>
                         <input type="text" id="north_lo_win" name="north_lo_win" value="{{ old('north_lo_win', 75) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 3 Con MB -->
                     <div>
                         <label for="north_3_digits_win" class="block text-sm font-medium text-gray-700">Trúng 3 Con MB</label>
                         <input type="text" id="north_3_digits_win" name="north_3_digits_win" value="{{ old('north_3_digits_win', 650) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng Xỉu Chủ MB -->
                     <div>
                         <label for="north_3_head_tail_win" class="block text-sm font-medium text-gray-700">Trúng Xỉu Chủ MB (3 con đầu đuôi)</label>
                         <input type="text" id="north_3_head_tail_win" name="north_3_head_tail_win" value="{{ old('north_3_head_tail_win', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 4 Con MB -->
                     <div>
                         <label for="north_4_digits_win" class="block text-sm font-medium text-gray-700">Trúng 4 Con MB</label>
                         <input type="text" id="north_4_digits_win" name="north_4_digits_win" value="{{ old('north_4_digits_win', 5500) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng Đá MB -->
                     <div>
                         <label for="north_slide_win" class="block text-sm font-medium text-gray-700">Trúng Đá MB</label>
                         <input type="text" id="north_slide_win" name="north_slide_win" value="{{ old('north_slide_win', 650) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Thưởng Đá Thẳng MB -->
@@ -407,60 +407,60 @@
                         <div>
                             <label for="north_slide2_rate" class="block text-sm font-medium text-gray-700">Giá cò xiên 2 MB</label>
                             <input type="text" id="north_slide2_rate" name="north_slide2_rate" value="{{ old('north_slide2_rate', 0.750) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         <div>
                             <label for="north_slide2_win" class="block text-sm font-medium text-gray-700">Trúng xiên 2 MB</label>
                             <input type="text" id="north_slide2_win" name="north_slide2_win" value="{{ old('north_slide2_win', 75) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         
                         <!-- Xiên 3 -->
                         <div>
                             <label for="north_slide3_rate" class="block text-sm font-medium text-gray-700">Giá cò xiên 3 MB</label>
                             <input type="text" id="north_slide3_rate" name="north_slide3_rate" value="{{ old('north_slide3_rate', 0.750) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         <div>
                             <label for="north_slide3_win" class="block text-sm font-medium text-gray-700">Trúng xiên 3 MB</label>
                             <input type="text" id="north_slide3_win" name="north_slide3_win" value="{{ old('north_slide3_win', 75) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         
                         <!-- Xiên 4 -->
                         <div>
                             <label for="north_slide4_rate" class="block text-sm font-medium text-gray-700">Giá cò xiên 4 MB</label>
                             <input type="text" id="north_slide4_rate" name="north_slide4_rate" value="{{ old('north_slide4_rate', 0.75) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         <div>
                             <label for="north_slide4_win" class="block text-sm font-medium text-gray-700">Trúng xiên 4 MB</label>
                             <input type="text" id="north_slide4_win" name="north_slide4_win" value="{{ old('north_slide4_win', 75) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         
                         <!-- Xiên 5 -->
                         <div>
                             <label for="north_slide5_rate" class="block text-sm font-medium text-gray-700">Giá cò xiên 5 MB</label>
                             <input type="text" id="north_slide5_rate" name="north_slide5_rate" value="{{ old('north_slide5_rate', 0.750) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         <div>
                             <label for="north_slide5_win" class="block text-sm font-medium text-gray-700">Trúng xiên 5 MB</label>
                             <input type="text" id="north_slide5_win" name="north_slide5_win" value="{{ old('north_slide5_win', 75) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         
                         <!-- Xiên 6 -->
                         <div>
                             <label for="north_slide6_rate" class="block text-sm font-medium text-gray-700">Giá cò xiên 6 MB</label>
                             <input type="text" id="north_slide6_rate" name="north_slide6_rate" value="{{ old('north_slide6_rate', 0.750) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                         <div>
                             <label for="north_slide6_win" class="block text-sm font-medium text-gray-700">Trúng xiên 6 MB</label>
                             <input type="text" id="north_slide6_win" name="north_slide6_win" value="{{ old('north_slide6_win', 75) }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                         </div>
                     </div>
                 </div>
@@ -475,98 +475,98 @@
                     <div>
                         <label for="central_head_tail_rate" class="block text-sm font-medium text-gray-700">Giá cò 2 Con Đầu - Đuôi MT</label>
                         <input type="text" id="central_head_tail_rate" name="central_head_tail_rate" value="{{ old('central_head_tail_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá Cò 2 Con lô MT -->
                     <div>
                         <label for="central_lo_rate" class="block text-sm font-medium text-gray-700">Giá Cò 2 Con lô MT</label>
                         <input type="text" id="central_lo_rate" name="central_lo_rate" value="{{ old('central_lo_rate', 21.9) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò 3 Con MT -->
                     <div>
                         <label for="central_3_digits_rate" class="block text-sm font-medium text-gray-700">Giá cò 3 Con MT</label>
                         <input type="text" id="central_3_digits_rate" name="central_3_digits_rate" value="{{ old('central_3_digits_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò Xỉu Chủ MT -->
                     <div>
                         <label for="central_3_head_tail_rate" class="block text-sm font-medium text-gray-700">Giá cò Xỉu Chủ MT (3 con đầu đuôi)</label>
                         <input type="text" id="central_3_head_tail_rate" name="central_3_head_tail_rate" value="{{ old('central_3_head_tail_rate', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá cò 4 Con MT -->
                     <div>
                         <label for="central_4_digits_rate" class="block text-sm font-medium text-gray-700">Giá cò 4 Con MT</label>
                         <input type="text" id="central_4_digits_rate" name="central_4_digits_rate" value="{{ old('central_4_digits_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá Cò Ðá Xiên MT -->
                     <div>
                         <label for="central_slide_rate" class="block text-sm font-medium text-gray-700">Giá Cò Ðá Xiên MT</label>
                         <input type="text" id="central_slide_rate" name="central_slide_rate" value="{{ old('central_slide_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Giá Cò Đá Thẳng MT -->
                     <div>
                         <label for="central_straight_rate" class="block text-sm font-medium text-gray-700">Giá Cò Đá Thẳng MT</label>
                         <input type="text" id="central_straight_rate" name="central_straight_rate" value="{{ old('central_straight_rate', 0.750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 2 Con Đầu - Đuôi MT -->
                     <div>
                         <label for="central_head_tail_win" class="block text-sm font-medium text-gray-700">Trúng 2 Con Đầu - Đuôi MT</label>
                         <input type="text" id="central_head_tail_win" name="central_head_tail_win" value="{{ old('central_head_tail_win', 75) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 2 Con lô MT -->
                     <div>
                         <label for="central_lo_win" class="block text-sm font-medium text-gray-700">Trúng 2 Con lô MT</label>
                         <input type="text" id="central_lo_win" name="central_lo_win" value="{{ old('central_lo_win', 75) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 3 Con MT -->
                     <div>
                         <label for="central_3_digits_win" class="block text-sm font-medium text-gray-700">Trúng 3 Con MT</label>
                         <input type="text" id="central_3_digits_win" name="central_3_digits_win" value="{{ old('central_3_digits_win', 650) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng Xỉu Chủ MT -->
                     <div>
                         <label for="central_3_head_tail_win" class="block text-sm font-medium text-gray-700">Trúng Xỉu Chủ MT (3 con đầu đuôi)</label>
                         <input type="text" id="central_3_head_tail_win" name="central_3_head_tail_win" value="{{ old('central_3_head_tail_win', 0) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng 4 Con MT -->
                     <div>
                         <label for="central_4_digits_win" class="block text-sm font-medium text-gray-700">Trúng 4 Con MT</label>
                         <input type="text" id="central_4_digits_win" name="central_4_digits_win" value="{{ old('central_4_digits_win', 5500) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng Đá Xiên MT -->
                     <div>
                         <label for="central_slide_win" class="block text-sm font-medium text-gray-700">Trúng Đá Xiên MT</label>
                         <input type="text" id="central_slide_win" name="central_slide_win" value="{{ old('central_slide_win', 550) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Trúng Đá Thẳng MT -->
                     <div>
                         <label for="central_straight_win" class="block text-sm font-medium text-gray-700">Trúng Đá Thẳng MT</label>
                         <input type="text" id="central_straight_win" name="central_straight_win" value="{{ old('central_straight_win', 750) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
                     </div>
                     
                     <!-- Thưởng Đá Thẳng MT -->
