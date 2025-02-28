@@ -40,6 +40,7 @@
                 <!-- Cú pháp đặt cược -->
                 <div>
                     <label for="bet_string" class="block text-sm font-medium text-gray-700">Nhập cú pháp đặt cược</label>
+                    <input type="hidden" value="{{$customer->id}}" id="customerid" />
                     <input type="text" id="bet_string" name="bet_string" 
                         placeholder="Ví dụ: 78 de hcm 100k" 
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-2 border">
@@ -98,6 +99,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const customerid = document.getElementById('customerid');
         const betDateInput = document.getElementById('bet_date');
         const betStringInput = document.getElementById('bet_string');
         const submitButton = document.getElementById('submit_button');
@@ -127,7 +129,7 @@
                 return;
             }
             
-            parseBetString(this.value, betDateInput.value);
+            parseBetString(this.value, betDateInput.value, customerid.value);
         });
         
         // Hàm tải danh sách tỉnh đài theo ngày
@@ -198,7 +200,7 @@
         }
         
         // Hàm phân tích cú pháp đặt cược
-        function parseBetString(betString, betDate) {
+        function parseBetString(betString, betDate, customerid) {
             fetch('{{ route('bets.parse') }}', {
                 method: 'POST',
                 headers: {
@@ -207,11 +209,14 @@
                 },
                 body: JSON.stringify({ 
                     bet_string: betString,
-                    bet_date: betDate
+                    bet_date: betDate,
+                    customer: customerid
                 })
             })
             .then(response => response.json())
             .then(data => {
+                console.log(data);
+                
                 if (data.is_valid) {
                     // Hiển thị xem trước đặt cược
                     document.getElementById('preview_numbers').textContent = data.numbers.join(', ');

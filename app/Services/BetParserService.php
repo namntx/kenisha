@@ -7,6 +7,8 @@ use App\Models\Province;
 use App\Models\Region;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
 
 class BetParserService
 {
@@ -153,6 +155,7 @@ class BetParserService
                 } else {
                     // Nếu không có khách hàng hoặc không có cài đặt, sử dụng tỷ lệ mặc định
                     $result['payout_ratio'] = $betTypeModel->payout_ratio;
+                    Log::debug($betTypeModel->payout_ratio);
                 }
             } else {
                 $result['error'] = "Không tìm thấy kiểu đánh {$betType} trong hệ thống";
@@ -179,6 +182,7 @@ class BetParserService
                 if ($betType == 'de') {
                     return $settings->south_head_tail_win;
                 } elseif ($betType == 'lo') {
+                    Log::debug("Using south_lo_win: {$settings->south_lo_win}");
                     return $settings->south_lo_win;
                 } elseif ($betType == '3c') {
                     return $settings->south_3_digits_win;

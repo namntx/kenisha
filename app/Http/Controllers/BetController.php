@@ -62,7 +62,16 @@ class BetController extends Controller
     {
         $input = $request->input('bet_string');
         $betDate = $request->input('bet_date') ? Carbon::parse($request->input('bet_date')) : Carbon::now();
-        $result = $this->betParserService->parse($input, $betDate);
+        
+        // Lấy đối tượng User từ ID
+        $customerId = $request->input('customer');
+        $customer = null;
+        
+        if ($customerId) {
+            $customer = \App\Models\User::find($customerId);
+        }
+        
+        $result = $this->betParserService->parse($input, $betDate, $customer);
         
         return response()->json($result);
     }
