@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LotteryResult;
 use App\Models\Province;
 use App\Models\Region;
-use App\Services\LotteryProcessor;
+use App\Services\LotteryProcessorService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 

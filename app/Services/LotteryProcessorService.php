@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
-class LotteryProcessor
+class LotteryProcessorService
 {
     /**
      * Xử lý tất cả các vé cược cho một kết quả xổ số
@@ -418,48 +418,50 @@ class LotteryProcessor
      */
     private function checkDaThang($numbers, $pair, $winType)
     {
-        // Cách tính Đá Thẳng:
-        // 1. Một lần: Cả 2 số trong cặp phải giống số đánh
-        // 2. Ky rưỡi: Số đánh là đảo ngược của một trong hai số trong cặp
-        // 3. Nhiều cặp: Số đánh là đảo ngược của cả 2 số trong cặp
-        
-        // Tách cặp số đánh
-        $num1 = substr($numbers, 0, 2);
-        $num2 = substr($numbers, 2, 2);
-        
-        switch ($winType) {
-            case 1: // Một lần
-                return ($num1 === $pair[0] && $num2 === $pair[1]) || 
-                       ($num1 === $pair[1] && $num2 === $pair[0]);
-                
-            case 2: // Ky rưỡi
-                $reversed1 = strrev($num1);
-                $reversed2 = strrev($num2);
-                
-                return ($num1 === $pair[0] && $reversed2 === $pair[1]) || 
-                       ($num1 === $pair[1] && $reversed2 === $pair[0]) ||
-                       ($reversed1 === $pair[0] && $num2 === $pair[1]) || 
-                       ($reversed1 === $pair[1] && $num2 === $pair[0]);
-                
-            case 3: // Nhiều cặp
-                $reversed1 = strrev($num1);
-                $reversed2 = strrev($num2);
-                
-                foreach ($pair as $p1) {
-                    foreach ($pair as $p2) {
-                        if (($num1 === $p1 && $num2 === $p2) ||
-                            ($reversed1 === $p1 && $reversed2 === $p2) ||
-                            ($num1 === $p1 && $reversed2 === $p2) ||
-                            ($reversed1 === $p1 && $num2 === $p2)) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-                
-            default:
-                return false;
+        // Tách cặp số đánh thành 2 số riêng biệt (mỗi số 2 chữ số)
+        if (strlen($numbers) == 4) {
+            $num1 = substr($numbers, 0, 2);
+            $num2 = substr($numbers, 2, 2);
+        } else {
+            return false; // Không đúng định dạng
         }
+
+        // Một lần: Số đã đánh phải trùng chính xác với cặp số trúng
+        if ($winType == 1) {
+            return ($num1 == $pair[0] && $num2 == $pair[1]) || 
+                ($num1 == $pair[1] && $num2 == $pair[0]);
+        }
+        
+        // Ky rưỡi: Cho phép đánh cả số đảo
+        else if ($winType == 2) {
+            $reversed1 = strrev($num1);
+            $reversed2 = strrev($num2);
+            
+            return ($num1 == $pair[0] && $num2 == $pair[1]) || 
+                ($num1 == $pair[1] && $num2 == $pair[0]) ||
+                ($reversed1 == $pair[0] && $num2 == $pair[1]) || 
+                ($num1 == $pair[0] && $reversed2 == $pair[1]) ||
+                ($reversed1 == $pair[1] && $num2 == $pair[0]) || 
+                ($num1 == $pair[1] && $reversed2 == $pair[0]);
+        }
+        
+        // Nhiều cặp: Cho phép đánh cả số đảo và các tổ hợp khác
+        else if ($winType == 3) {
+            $reversed1 = strrev($num1);
+            $reversed2 = strrev($num2);
+            
+            // Kiểm tra tất cả các tổ hợp có thể
+            return ($num1 == $pair[0] && $num2 == $pair[1]) || 
+                ($num1 == $pair[1] && $num2 == $pair[0]) ||
+                ($reversed1 == $pair[0] && $num2 == $pair[1]) || 
+                ($num1 == $pair[0] && $reversed2 == $pair[1]) ||
+                ($reversed1 == $pair[1] && $num2 == $pair[0]) || 
+                ($num1 == $pair[1] && $reversed2 == $pair[0]) ||
+                ($reversed1 == $pair[0] && $reversed2 == $pair[1]) || 
+                ($reversed1 == $pair[1] && $reversed2 == $pair[0]);
+        }
+        
+        return false;
     }
     
     /**

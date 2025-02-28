@@ -6,6 +6,7 @@ use App\Http\Controllers\LotteryResultController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\LotteryApiController;
 use Illuminate\Support\Facades\Route;
 
 // Trang chủ
