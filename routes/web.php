@@ -18,6 +18,10 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+     // Tổng kết ngày
+    Route::get('/daily-summary', [DailySummaryController::class, 'index'])->name('daily-summary.index');
+    Route::get('/daily-summary/customer/{customer}', [DailySummaryController::class, 'customer'])->name('daily-summary.customer');
     
     // Quản lý khách hàng (dành cho Agent)
     Route::middleware(['role:Agent'])->group(function () {

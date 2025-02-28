@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Bet;
 use App\Models\LotteryResult;
 use App\Models\User;
-use App\Models\Transaction;
 use App\Models\CustomerSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -105,24 +104,6 @@ class LotteryProcessorService
         $bet->is_won = $isWin;
         $bet->win_amount = $isWin ? $winAmount : 0;
         $bet->save();
-        
-        // Nếu thắng, cập nhật số dư và tạo giao dịch
-        if ($isWin) {
-            $balanceBefore = $customer->balance;
-            $customer->balance += $winAmount;
-            $customer->save();
-            
-            // Tạo giao dịch
-            Transaction::create([
-                'user_id' => $customer->id,
-                'type' => 'win',
-                'amount' => $winAmount,
-                'balance_before' => $balanceBefore,
-                'balance_after' => $customer->balance,
-                'bet_id' => $bet->id,
-                'description' => "Trúng thưởng {$bet->betType->name} {$bet->numbers}"
-            ]);
-        }
     }
     
     /**

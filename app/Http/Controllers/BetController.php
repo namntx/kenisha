@@ -5,12 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Bet;
 use App\Models\Province;
 use App\Models\Region;
-use App\Models\Transaction;
-use App\Services\BetParserService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use App\Services\BetParserService;
 
 class BetController extends Controller
 {
@@ -23,7 +22,13 @@ class BetController extends Controller
 
     public function index(Request $request)
     {
-        $query = Bet::where('user_id', Auth::id());
+        $query = Bet::query();
+        
+        // Nếu là Agent, chỉ lấy vé của các khách hàng của họ
+        if (Auth::user()->isAgent()) {
+            $customerIds = Auth::user()->customers()->pluck('id')->toArray();
+            $query->whereIn('user_id', $customerIds);
+        }
         
         // Lọc theo ngày
         if ($request->filled('from_date')) {
@@ -45,12 +50,13 @@ class BetController extends Controller
             }
         }
         
-        $bets = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $bets = $query->with(['betType', 'region', 'province', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
         
         return view('bets.index', compact('bets'));
     }
-    
-    // Các phương thức khác giữ nguyên...
     
     public function parse(Request $request)
     {
@@ -61,9 +67,11 @@ class BetController extends Controller
         return response()->json($result);
     }
 
-    // Thêm phương thức mới vào BetController
-    public function storeForCustomer(Request $request, User $customer)
+    public function storeForCustomer(Request $request, $customer)
     {
+        // Lấy thông tin khách hàng
+        $customer = \App\Models\User::find($customer);
+
         // Kiểm tra quyền truy cập
         if ($customer->agent_id !== Auth::id()) {
             abort(403, 'Bạn không có quyền đặt cược cho khách hàng này');
@@ -81,12 +89,6 @@ class BetController extends Controller
         
         if (!$parsed['is_valid']) {
             return back()->with('error', 'Cú pháp không hợp lệ: ' . $parsed['error']);
-        }
-        
-        // Kiểm tra số dư của khách hàng
-        $totalAmount = $parsed['amount'] * count($parsed['numbers']);
-        if ($customer->balance < $totalAmount) {
-            return back()->with('error', 'Số dư của khách hàng không đủ để đặt cược: '.number_format($customer->balance).' < '.number_format($totalAmount));
         }
         
         // Tạo giao dịch trong transaction
@@ -120,21 +122,6 @@ class BetController extends Controller
                     $region = Region::find($parsed['region_id']);
                     $locationName = $region->name;
                 }
-                
-                // Ghi transaction
-                $transaction = new Transaction();
-                $transaction->user_id = $customer->id;
-                $transaction->type = 'bet';
-                $transaction->amount = -$parsed['amount'];
-                $transaction->balance_before = $customer->balance;
-                $transaction->balance_after = $customer->balance - $parsed['amount'];
-                $transaction->bet_id = $bet->id;
-                $transaction->description = "Đặt cược {$parsed['type']} {$number} {$locationName}";
-                $transaction->save();
-                
-                // Cập nhật số dư của khách hàng
-                $customer->balance -= $parsed['amount'];
-                $customer->save();
             }
             
             DB::commit();
@@ -161,11 +148,6 @@ class BetController extends Controller
         }
         
         $user = Auth::user();
-        
-        // Kiểm tra số dư
-        if ($user->balance < $parsed['amount'] * count($parsed['numbers'])) {
-            return back()->with('error', 'Số dư không đủ để đặt cược');
-        }
         
         // Tạo giao dịch trong transaction
         DB::beginTransaction();
@@ -198,21 +180,6 @@ class BetController extends Controller
                     $region = Region::find($parsed['region_id']);
                     $locationName = $region->name;
                 }
-                
-                // Ghi transaction
-                $transaction = new Transaction();
-                $transaction->user_id = $user->id;
-                $transaction->type = 'bet';
-                $transaction->amount = -$parsed['amount'];
-                $transaction->balance_before = $user->balance;
-                $transaction->balance_after = $user->balance - $parsed['amount'];
-                $transaction->bet_id = $bet->id;
-                $transaction->description = "Đặt cược {$parsed['type']} {$number} {$locationName}";
-                $transaction->save();
-                
-                // Cập nhật số dư
-                $user->balance -= $parsed['amount'];
-                $user->save();
             }
             
             DB::commit();

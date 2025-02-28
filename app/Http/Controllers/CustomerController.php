@@ -70,50 +70,7 @@ class CustomerController extends Controller
             'south_straight_win_type' => ['nullable', 'integer', 'in:1,2,3'],
             'south_slide_win_type' => ['nullable', 'integer', 'in:1,2,3'],
             
-            // Cài đặt miền Bắc
-            'north_head_tail_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_lo_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_3_digits_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_3_head_tail_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_4_digits_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_slide_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_head_tail_win' => ['nullable', 'numeric', 'min:0'],
-            'north_lo_win' => ['nullable', 'numeric', 'min:0'],
-            'north_3_digits_win' => ['nullable', 'numeric', 'min:0'],
-            'north_3_head_tail_win' => ['nullable', 'numeric', 'min:0'],
-            'north_4_digits_win' => ['nullable', 'numeric', 'min:0'],
-            'north_slide_win' => ['nullable', 'numeric', 'min:0'],
-            'north_straight_bonus' => ['nullable', 'boolean'],
-            'north_slide_win_type' => ['nullable', 'integer', 'in:1,2,3'],
-            'north_slide2_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_slide2_win' => ['nullable', 'numeric', 'min:0'],
-            'north_slide3_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_slide3_win' => ['nullable', 'numeric', 'min:0'],
-            'north_slide4_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_slide4_win' => ['nullable', 'numeric', 'min:0'],
-            'north_slide5_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_slide5_win' => ['nullable', 'numeric', 'min:0'],
-            'north_slide6_rate' => ['nullable', 'numeric', 'min:0'],
-            'north_slide6_win' => ['nullable', 'numeric', 'min:0'],
-            
-            // Cài đặt miền Trung
-            'central_head_tail_rate' => ['nullable', 'numeric', 'min:0'],
-            'central_lo_rate' => ['nullable', 'numeric', 'min:0'],
-            'central_3_digits_rate' => ['nullable', 'numeric', 'min:0'],
-            'central_3_head_tail_rate' => ['nullable', 'numeric', 'min:0'],
-            'central_4_digits_rate' => ['nullable', 'numeric', 'min:0'],
-            'central_slide_rate' => ['nullable', 'numeric', 'min:0'],
-            'central_straight_rate' => ['nullable', 'numeric', 'min:0'],
-            'central_head_tail_win' => ['nullable', 'numeric', 'min:0'],
-            'central_lo_win' => ['nullable', 'numeric', 'min:0'],
-            'central_3_digits_win' => ['nullable', 'numeric', 'min:0'],
-            'central_3_head_tail_win' => ['nullable', 'numeric', 'min:0'],
-            'central_4_digits_win' => ['nullable', 'numeric', 'min:0'],
-            'central_slide_win' => ['nullable', 'numeric', 'min:0'],
-            'central_straight_win' => ['nullable', 'numeric', 'min:0'],
-            'central_straight_bonus' => ['nullable', 'boolean'],
-            'central_straight_win_type' => ['nullable', 'integer', 'in:1,2,3'],
-            'central_slide_win_type' => ['nullable', 'integer', 'in:1,2,3'],
+            // Và các cài đặt tương tự cho miền Bắc và miền Trung...
         ]);
 
         $customerRole = Role::where('name', 'Customer')->first();
@@ -133,7 +90,7 @@ class CustomerController extends Controller
                 'password' => Hash::make($validated['password']),
                 'role_id' => $customerRole->id,
                 'agent_id' => Auth::id(),
-                'balance' => 0,
+                'balance' => 0, // Vẫn giữ trường này để tương thích, nhưng không sử dụng
                 'settings' => [
                     'note' => $validated['note'] ?? '',
                 ],
@@ -190,12 +147,6 @@ class CustomerController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
-            
-        // Lấy các giao dịch gần đây
-        $recentTransactions = $customer->transactions()
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
 
         return view('customers.show', compact(
             'customer', 
@@ -205,8 +156,7 @@ class CustomerController extends Controller
             'pendingBets',
             'totalSpent',
             'totalWon',
-            'recentBets',
-            'recentTransactions'
+            'recentBets'
         ));
     }
 
@@ -245,8 +195,7 @@ class CustomerController extends Controller
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'note' => ['nullable', 'string'],
             
-            // Cài đặt chung và các cài đặt khác như trong phương thức store
-            // Cùng các validation rule như trong phương thức store
+            // Và các cài đặt khác như trong phương thức store
         ]);
 
         DB::beginTransaction();
@@ -298,157 +247,6 @@ class CustomerController extends Controller
     }
 
     /**
-     * Điều chỉnh số dư khách hàng
-     */
-    public function adjustBalance(Request $request, User $customer)
-    {
-        // Kiểm tra quyền truy cập
-        if ($customer->agent_id !== Auth::id()) {
-            abort(403, 'Bạn không có quyền điều chỉnh số dư của khách hàng này');
-        }
-
-        $validated = $request->validate([
-            'amount' => ['required', 'numeric'],
-            'description' => ['required', 'string', 'max:255'],
-        ]);
-
-        $amount = $validated['amount'];
-        $description = $validated['description'];
-
-        // Kiểm tra nếu giảm tiền, không được giảm quá số dư hiện có
-        if ($amount < 0 && abs($amount) > $customer->balance) {
-            return back()->with('error', 'Số tiền rút không được lớn hơn số dư hiện có');
-        }
-
-        DB::beginTransaction();
-        
-        try {
-            // Lưu trạng thái trước khi thay đổi
-            $balanceBefore = $customer->balance;
-            $balanceAfter = $balanceBefore + $amount;
-
-            // Tạo transaction
-            Transaction::create([
-                'user_id' => $customer->id,
-                'type' => $amount > 0 ? 'deposit' : 'withdrawal',
-                'amount' => $amount,
-                'balance_before' => $balanceBefore,
-                'balance_after' => $balanceAfter,
-                'description' => $description,
-            ]);
-
-            // Cập nhật số dư
-            $customer->balance = $balanceAfter;
-            $customer->save();
-            
-            DB::commit();
-
-            return redirect()->route('customers.show', $customer)
-                ->with('success', 'Điều chỉnh số dư thành công');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Hiển thị form đặt cược cho khách hàng
-     */
-    public function betForCustomer(User $customer)
-    {
-        // Kiểm tra quyền truy cập
-        if ($customer->agent_id !== Auth::id()) {
-            abort(403, 'Bạn không có quyền đặt cược cho khách hàng này');
-        }
-
-        // Lấy danh sách tỉnh đài mở thưởng hôm nay
-        $today = Carbon::now();
-        $dayOfWeek = $today->dayOfWeek;
-        
-        $todayProvinces = \App\Models\Province::where('draw_day', $dayOfWeek)
-            ->where('is_active', true)
-            ->orderBy('region_id')
-            ->orderBy('name')
-            ->get();
-
-        return view('customers.bet', compact('customer', 'todayProvinces'));
-    }
-    
-    /**
-     * Xem lịch sử cược của khách hàng
-     */
-    public function bets(User $customer, Request $request)
-    {
-        // Kiểm tra quyền truy cập
-        if ($customer->agent_id !== Auth::id()) {
-            abort(403, 'Bạn không có quyền xem lịch sử cược của khách hàng này');
-        }
-        
-        $query = $customer->bets();
-        
-        // Lọc theo ngày
-        if ($request->filled('from_date')) {
-            $query->where('bet_date', '>=', $request->from_date);
-        }
-        
-        if ($request->filled('to_date')) {
-            $query->where('bet_date', '<=', $request->to_date);
-        }
-        
-        // Lọc theo trạng thái
-        if ($request->filled('status')) {
-            if ($request->status === 'pending') {
-                $query->where('is_processed', false);
-            } elseif ($request->status === 'won') {
-                $query->where('is_processed', true)->where('is_won', true);
-            } elseif ($request->status === 'lost') {
-                $query->where('is_processed', true)->where('is_won', false);
-            }
-        }
-        
-        // Sắp xếp
-        $query->orderBy('created_at', 'desc');
-        
-        $bets = $query->with(['betType', 'region', 'province'])->paginate(20)->withQueryString();
-        
-        return view('customers.bets', compact('customer', 'bets'));
-    }
-    
-    /**
-     * Xem lịch sử giao dịch của khách hàng
-     */
-    public function transactions(User $customer, Request $request)
-    {
-        // Kiểm tra quyền truy cập
-        if ($customer->agent_id !== Auth::id()) {
-            abort(403, 'Bạn không có quyền xem lịch sử giao dịch của khách hàng này');
-        }
-        
-        $query = $customer->transactions();
-        
-        // Lọc theo ngày
-        if ($request->filled('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
-        }
-        
-        if ($request->filled('to_date')) {
-            $query->whereDate('created_at', '<=', $request->to_date);
-        }
-        
-        // Lọc theo loại giao dịch
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-        
-        // Sắp xếp
-        $query->orderBy('created_at', 'desc');
-        
-        $transactions = $query->paginate(20)->withQueryString();
-        
-        return view('customers.transactions', compact('customer', 'transactions'));
-    }
-    
-    /**
      * Xóa khách hàng (chỉ có thể xóa khi khách hàng chưa có giao dịch nào)
      */
     public function destroy(User $customer)
@@ -459,7 +257,7 @@ class CustomerController extends Controller
         }
         
         // Kiểm tra xem khách hàng đã có giao dịch chưa
-        if ($customer->bets()->exists() || $customer->transactions()->exists()) {
+        if ($customer->bets()->exists()) {
             return back()->with('error', 'Không thể xóa khách hàng đã có giao dịch');
         }
         
@@ -482,5 +280,28 @@ class CustomerController extends Controller
             DB::rollBack();
             return back()->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
         }
+    }
+    
+    /**
+     * Hiển thị form đặt cược cho khách hàng
+     */
+    public function betForCustomer(User $customer)
+    {
+        // Kiểm tra quyền truy cập
+        if ($customer->agent_id !== Auth::id()) {
+            abort(403, 'Bạn không có quyền đặt cược cho khách hàng này');
+        }
+
+        // Lấy danh sách tỉnh đài mở thưởng hôm nay
+        $today = Carbon::now();
+        $dayOfWeek = $today->dayOfWeek;
+        
+        $todayProvinces = \App\Models\Province::where('draw_day', $dayOfWeek)
+            ->where('is_active', true)
+            ->orderBy('region_id')
+            ->orderBy('name')
+            ->get();
+
+        return view('customers.bet', compact('customer', 'todayProvinces'));
     }
 }

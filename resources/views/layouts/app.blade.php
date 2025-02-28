@@ -29,15 +29,23 @@
                             </a>
                         </div>
                         <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                            <a href="{{ route('dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-blue-700 transition">
+                            <a href="{{ route('dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('dashboard') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">
                                 Dashboard
                             </a>
-                            <a href="{{ route('bets.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition">
+                            <a href="{{ route('daily-summary.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('daily-summary*') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">
+                                Tổng kết ngày
+                            </a>
+                            <a href="{{ route('bets.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('bets*') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">
                                 Danh sách cược
                             </a>
-                            <a href="{{ route('bets.create') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition">
+                            <a href="{{ route('bets.create') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('bets.create') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">
                                 Đặt cược
                             </a>
+                            @if(Auth::user()->isAgent())
+                            <a href="{{ route('customers.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('customers*') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">
+                                Khách hàng
+                            </a>
+                            @endif
                         </div>
                     </div>
                     <div class="hidden sm:flex sm:items-center sm:ml-6">
@@ -66,15 +74,23 @@
             <!-- Mobile menu -->
             <div id="mobile-menu" class="hidden sm:hidden">
                 <div class="pt-2 pb-3 space-y-1">
-                    <a href="{{ route('dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 border-blue-500 text-base font-medium text-blue-700 bg-blue-50 focus:outline-none focus:text-blue-800 focus:bg-blue-100 focus:border-blue-700 transition">
+                    <a href="{{ route('dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('dashboard') ? 'border-blue-500 text-blue-700 bg-blue-50' : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300' }} text-base font-medium focus:outline-none focus:text-blue-800 focus:bg-blue-100 focus:border-blue-700 transition">
                         Dashboard
                     </a>
-                    <a href="{{ route('bets.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition">
+                    <a href="{{ route('daily-summary.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('daily-summary*') ? 'border-blue-500 text-blue-700 bg-blue-50' : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300' }} text-base font-medium focus:outline-none focus:text-blue-800 focus:bg-blue-100 focus:border-blue-700 transition">
+                        Tổng kết ngày
+                    </a>
+                    <a href="{{ route('bets.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('bets.index') ? 'border-blue-500 text-blue-700 bg-blue-50' : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300' }} text-base font-medium focus:outline-none focus:text-blue-800 focus:bg-blue-100 focus:border-blue-700 transition">
                         Danh sách cược
                     </a>
-                    <a href="{{ route('bets.create') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition">
+                    <a href="{{ route('bets.create') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('bets.create') ? 'border-blue-500 text-blue-700 bg-blue-50' : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300' }} text-base font-medium focus:outline-none focus:text-blue-800 focus:bg-blue-100 focus:border-blue-700 transition">
                         Đặt cược
                     </a>
+                    @if(Auth::user()->isAgent())
+                    <a href="{{ route('customers.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('customers*') ? 'border-blue-500 text-blue-700 bg-blue-50' : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300' }} text-base font-medium focus:outline-none focus:text-blue-800 focus:bg-blue-100 focus:border-blue-700 transition">
+                        Khách hàng
+                    </a>
+                    @endif
                 </div>
                 
                 <div class="pt-4 pb-1 border-t border-gray-200">
@@ -139,5 +155,7 @@
             document.getElementById('mobile-menu').classList.toggle('hidden');
         });
     </script>
+    
+    @stack('scripts')
 </body>
 </html>

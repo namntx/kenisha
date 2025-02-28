@@ -30,11 +30,6 @@
         
         <!-- Tổng quan -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Số dư -->
-            <div class="bg-white rounded-lg shadow p-6 border border-gray-200">
-                <h2 class="text-lg font-medium text-gray-700 mb-2">Số dư hiện tại</h2>
-                <p class="text-3xl font-bold text-blue-600">{{ number_format($user->balance, 0, ',', '.') }} đ</p>
-            </div>
             
             @if(Auth::user()->isAgent())
                 <!-- Số lượng khách hàng -->
