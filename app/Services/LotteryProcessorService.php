@@ -210,6 +210,37 @@ class LotteryProcessorService
                 $winAmount = $isWin ? $amount * $setting->south_slide_win : 0;
                 return [$isWin, $winAmount];
                 
+            case 'dau_duoi': // Đầu Đuôi - cả đầu và đuôi của giải đặc biệt
+                $firstDigit = substr($specialPrize, 0, 1);
+                $lastDigit = substr($specialPrize, -1);
+                $isWin = $numbers === $firstDigit || $numbers === $lastDigit;
+                $winAmount = $isWin ? $amount * ($setting->south_head_tail_win / 2) : 0;
+                return [$isWin, $winAmount];
+                
+            case 'bao_lo': // Bao Lô - đánh tất cả các vị trí
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * $setting->south_lo_win * 0.85; // Giảm tỉ lệ thắng so với lô thường
+                return [$isWin, $winAmount];
+                
+            case 'xiu_chu': // Xỉu Chủ
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * $setting->south_lo_win;
+                return [$isWin, $winAmount];
+                
+            case 'bay_lo': // Bảy Lô
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * 7; // Tỉ lệ cố định là 7
+                return [$isWin, $winAmount];
+                
+            case 'tam_lo': // Tám Lô
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * 8; // Tỉ lệ cố định là 8
+                return [$isWin, $winAmount];
+                
             default:
                 return [false, 0];
         }
@@ -292,6 +323,37 @@ class LotteryProcessorService
                 $winAmount = $isWin ? $amount * $setting->north_slide6_win : 0;
                 return [$isWin, $winAmount];
                 
+            case 'dau_duoi': // Đầu Đuôi - cả đầu và đuôi của giải đặc biệt
+                $firstDigit = substr($specialPrize, 0, 1);
+                $lastDigit = substr($specialPrize, -1);
+                $isWin = $numbers === $firstDigit || $numbers === $lastDigit;
+                $winAmount = $isWin ? $amount * ($setting->north_head_tail_win / 2) : 0;
+                return [$isWin, $winAmount];
+                
+            case 'bao_lo': // Bao Lô - đánh tất cả các vị trí
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * $setting->north_lo_win * 0.85; // Giảm tỉ lệ thắng so với lô thường
+                return [$isWin, $winAmount];
+                
+            case 'xiu_chu': // Xỉu Chủ
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * $setting->north_lo_win;
+                return [$isWin, $winAmount];
+                
+            case 'bay_lo': // Bảy Lô
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * 7; // Tỉ lệ cố định là 7
+                return [$isWin, $winAmount];
+                
+            case 'tam_lo': // Tám Lô
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * 8; // Tỉ lệ cố định là 8
+                return [$isWin, $winAmount];
+                
             default:
                 return [false, 0];
         }
@@ -357,6 +419,37 @@ class LotteryProcessorService
                 $winType = $setting->central_slide_win_type ?? 3;
                 $isWin = $this->checkDaXien($numbers, $allPrizes, $winType);
                 $winAmount = $isWin ? $amount * $setting->central_slide_win : 0;
+                return [$isWin, $winAmount];
+                
+            case 'dau_duoi': // Đầu Đuôi - cả đầu và đuôi của giải đặc biệt
+                $firstDigit = substr($specialPrize, 0, 1);
+                $lastDigit = substr($specialPrize, -1);
+                $isWin = $numbers === $firstDigit || $numbers === $lastDigit;
+                $winAmount = $isWin ? $amount * ($setting->central_head_tail_win / 2) : 0;
+                return [$isWin, $winAmount];
+                
+            case 'bao_lo': // Bao Lô - đánh tất cả các vị trí
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * $setting->central_lo_win * 0.85; // Giảm tỉ lệ thắng so với lô thường
+                return [$isWin, $winAmount];
+                
+            case 'xiu_chu': // Xỉu Chủ
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * $setting->central_lo_win;
+                return [$isWin, $winAmount];
+                
+            case 'bay_lo': // Bảy Lô
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * 7; // Tỉ lệ cố định là 7
+                return [$isWin, $winAmount];
+                
+            case 'tam_lo': // Tám Lô
+                $count = $this->countOccurrences($numbers, $allPrizes, 2);
+                $isWin = $count > 0;
+                $winAmount = $count * $amount * 8; // Tỉ lệ cố định là 8
                 return [$isWin, $winAmount];
                 
             default:
