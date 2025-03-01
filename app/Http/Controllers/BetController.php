@@ -5,19 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Bet;
 use App\Models\Province;
 use App\Models\Region;
+use App\Models\LotteryResult;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Services\BetParserService;
+use App\Services\LotteryProcessorService;
 
 class BetController extends Controller
 {
     protected $betParserService;
+    protected $lotteryProcessor;
     
-    public function __construct(BetParserService $betParserService)
+    public function __construct(BetParserService $betParserService, LotteryProcessorService $lotteryProcessor)
     {
         $this->betParserService = $betParserService;
+        $this->lotteryProcessor = $lotteryProcessor;
     }
 
     public function index(Request $request)
@@ -104,6 +108,8 @@ class BetController extends Controller
         DB::beginTransaction();
         
         try {
+            $savedBets = [];
+            
             foreach ($parsed['numbers'] as $number) {
                 $bet = new Bet();
                 $bet->user_id = $customer->id; // Đặt user_id là ID của khách hàng
@@ -134,6 +140,8 @@ class BetController extends Controller
                 $bet->raw_input = $parsed['raw_input'];
                 $bet->save();
                 
+                $savedBets[] = $bet;
+                
                 // Xác định tên tỉnh/khu vực để hiển thị trong mô tả
                 $locationName = '';
                 if (isset($parsed['province_id'])) {
@@ -144,6 +152,9 @@ class BetController extends Controller
                     $locationName = $region->name;
                 }
             }
+            
+            // Kiểm tra nếu đã có kết quả xổ số cho ngày đặt cược, tự động xử lý vé
+            $this->processNewBets($savedBets);
             
             DB::commit();
             return redirect()->route('customers.show', $customer)
@@ -174,6 +185,8 @@ class BetController extends Controller
         DB::beginTransaction();
         
         try {
+            $savedBets = [];
+            
             foreach ($parsed['numbers'] as $number) {
                 $bet = new Bet();
                 $bet->user_id = $user->id;
@@ -204,6 +217,8 @@ class BetController extends Controller
                 $bet->raw_input = $parsed['raw_input'];
                 $bet->save();
                 
+                $savedBets[] = $bet;
+                
                 // Xác định tên tỉnh/khu vực để hiển thị trong mô tả
                 $locationName = '';
                 if (isset($parsed['province_id'])) {
@@ -214,6 +229,9 @@ class BetController extends Controller
                     $locationName = $region->name;
                 }
             }
+            
+            // Kiểm tra nếu đã có kết quả xổ số cho ngày đặt cược, tự động xử lý vé
+            $this->processNewBets($savedBets);
             
             DB::commit();
             return redirect()->route('bets.index')->with('success', 'Đặt cược thành công');
@@ -236,5 +254,133 @@ class BetController extends Controller
             ->get();
             
         return response()->json($provinces);
+    }
+    
+    /**
+     * Xử lý các vé cược mới nếu đã có kết quả xổ số
+     * 
+     * @param array $bets Danh sách các vé cược cần xử lý
+     * @return void
+     */
+    private function processNewBets(array $bets)
+    {
+        if (empty($bets)) {
+            return;
+        }
+        
+        // Lấy thông tin từ vé cược đầu tiên
+        $firstBet = $bets[0];
+        $betDate = $firstBet->bet_date;
+        $regionId = $firstBet->region_id;
+        $provinceId = $firstBet->province_id;
+        
+        // Tìm kết quả xổ số tương ứng
+        $query = LotteryResult::where('draw_date', $betDate);
+        
+        if ($provinceId) {
+            // Nếu có province_id, tìm kết quả theo province_id
+            $query->where('province_id', $provinceId);
+        } else {
+            // Nếu không có province_id, tìm kết quả theo region_id
+            $query->where('region_id', $regionId)->whereNull('province_id');
+        }
+        
+        $result = $query->first();
+        
+        // Nếu đã có kết quả xổ số, xử lý các vé cược
+        if ($result && !empty($result->results)) {
+            foreach ($bets as $bet) {
+                $this->lotteryProcessor->processBet($bet, $result);
+            }
+            
+            // Cập nhật trạng thái đã xử lý của kết quả xổ số nếu chưa được xử lý
+            if (!$result->is_processed) {
+                $result->is_processed = true;
+                $result->save();
+            }
+        }
+    }
+    
+    /**
+     * Xử lý tất cả các vé cược đang chờ
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function processAllPendingBets(Request $request)
+    {
+        // Lấy tất cả các vé cược chưa xử lý
+        $pendingBets = Bet::where('is_processed', false)->get();
+        
+        if ($pendingBets->isEmpty()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Không có vé cược nào đang chờ xử lý'
+            ]);
+        }
+        
+        // Nhóm các vé cược theo ngày, vùng miền và tỉnh
+        $groupedBets = [];
+        foreach ($pendingBets as $bet) {
+            $key = $bet->bet_date . '_' . $bet->region_id . '_' . ($bet->province_id ?? 'null');
+            if (!isset($groupedBets[$key])) {
+                $groupedBets[$key] = [
+                    'bet_date' => $bet->bet_date,
+                    'region_id' => $bet->region_id,
+                    'province_id' => $bet->province_id,
+                    'bets' => []
+                ];
+            }
+            $groupedBets[$key]['bets'][] = $bet;
+        }
+        
+        $processedCount = 0;
+        $results = [];
+        
+        // Xử lý từng nhóm vé cược
+        foreach ($groupedBets as $key => $group) {
+            // Tìm kết quả xổ số tương ứng
+            $query = LotteryResult::where('draw_date', $group['bet_date'])
+                ->where('region_id', $group['region_id']);
+            
+            if ($group['province_id']) {
+                $query->where('province_id', $group['province_id']);
+            } else {
+                $query->whereNull('province_id');
+            }
+            
+            $result = $query->first();
+            
+            // Nếu có kết quả xổ số, xử lý các vé cược
+            if ($result && !empty($result->results)) {
+                $regionName = Region::find($group['region_id'])->name;
+                $provinceName = $group['province_id'] ? Province::find($group['province_id'])->name : null;
+                $locationName = $provinceName ?? $regionName;
+                
+                foreach ($group['bets'] as $bet) {
+                    $this->lotteryProcessor->processBet($bet, $result);
+                    $processedCount++;
+                }
+                
+                $results[] = [
+                    'location' => $locationName,
+                    'date' => $group['bet_date'],
+                    'processed_count' => count($group['bets'])
+                ];
+                
+                // Cập nhật trạng thái đã xử lý của kết quả xổ số nếu chưa được xử lý
+                if (!$result->is_processed) {
+                    $result->is_processed = true;
+                    $result->save();
+                }
+            }
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Đã xử lý ' . $processedCount . ' vé cược đang chờ',
+            'processed_count' => $processedCount,
+            'details' => $results
+        ]);
     }
 }

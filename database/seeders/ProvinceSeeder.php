@@ -51,6 +51,7 @@ class ProvinceSeeder extends Seeder
             // Chủ nhật
             ['name' => 'Khánh Hòa', 'code' => 'kh', 'region_id' => 2, 'draw_day' => 0, 'is_active' => true],
             ['name' => 'Kon Tum', 'code' => 'kt', 'region_id' => 2, 'draw_day' => 0, 'is_active' => true],
+            ['name' => 'Thừa Thiên Huế', 'code' => 'tth', 'region_id' => 2, 'draw_day' => 0, 'is_active' => true],
         ]);
 
         // Miền Nam

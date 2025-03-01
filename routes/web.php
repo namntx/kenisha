@@ -68,10 +68,10 @@ Route::middleware(['auth'])->group(function () {
     
     // Báo cáo
     
-    Route::get('/reports/daily', [ReportController::class, 'daily'])->name('reports.daily');
-    Route::get('/reports/weekly', [ReportController::class, 'weekly'])->name('reports.weekly');
-    Route::get('/reports/monthly', [ReportController::class, 'monthly'])->name('reports.monthly');
-    Route::get('/reports/by-customer', [ReportController::class, 'byCustomer'])->name('reports.by-customer');
+    // Route::get('/reports/daily', [ReportController::class, 'daily'])->name('reports.daily');
+    // Route::get('/reports/weekly', [ReportController::class, 'weekly'])->name('reports.weekly');
+    // Route::get('/reports/monthly', [ReportController::class, 'monthly'])->name('reports.monthly');
+    // Route::get('/reports/by-customer', [ReportController::class, 'byCustomer'])->name('reports.by-customer');
     
     
     // Quản lý người dùng (Admin)

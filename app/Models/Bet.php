@@ -24,7 +24,9 @@ class Bet extends Model
         'is_won',
         'win_amount',
         'is_processed',
-        'raw_input'
+        'raw_input',
+        'bet_syntax',
+        'parsed_data'
     ];
     
     protected $casts = [
@@ -37,6 +39,7 @@ class Bet extends Model
         'collected_amount' => 'decimal:2',
         'potential_win' => 'decimal:2',
         'win_amount' => 'decimal:2',
+        'parsed_data' => 'json',
     ];
     
     public function user()

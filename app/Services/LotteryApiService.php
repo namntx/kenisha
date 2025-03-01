@@ -58,36 +58,45 @@ class LotteryApiService
     private function fetchFromXoSoThanTai(Carbon $date, string $region, ?string $province = null)
     {
         try {
-            $dateStr = $date->format('d-m-Y');
-            $formattedDate = $date->format('d-m-Y');
             $day = $date->format('d');
             $month = $date->format('m');
             $year = $date->format('Y');
             
-            // Xác định URL dựa vào vùng miền
-            $url = '';
+            // Tạo chuỗi ngày cho tham số AJAX
+            $urlDateFragment = "{$day}-{$month}-{$year}";
+            
+            // Xác định URL endpoint AJAX dựa vào vùng miền
+            $ajaxUrl = '';
             if ($region === 'mb') {
-                $url = "https://xosothantai.mobi/embedded/kq-mienbac#n{$day}-{$month}-{$year}";
+                $ajaxUrl = 'https://xosothantai.mobi/embedded/kq-mienbac';
             } elseif ($region === 'mn') {
-                $url = "https://xosothantai.mobi/embedded/kq-miennam#n{$day}-{$month}-{$year}";
+                $ajaxUrl = 'https://xosothantai.mobi/embedded/kq-miennam';
             } elseif ($region === 'mt') {
-                $url = "https://xosothantai.mobi/embedded/kq-mientrung#n{$day}-{$month}-{$year}";
+                $ajaxUrl = 'https://xosothantai.mobi/embedded/kq-mientrung';
             }
             
-            $response = $this->client->get($url, [
+            // Gửi POST request đến endpoint AJAX
+            $response = $this->client->post($ajaxUrl, [
                 'headers' => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                    'Accept' => 'application/json, text/javascript, */*; q=0.01',
                     'Accept-Language' => 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
                     'Cache-Control' => 'no-cache',
                     'Pragma' => 'no-cache',
-                    'Referer' => 'https://xosothantai.mobi/'
+                    'Referer' => 'https://xosothantai.mobi/',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                    'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'Origin' => 'https://xosothantai.mobi'
+                ],
+                'form_params' => [
+                    'ngay_quay' => $urlDateFragment
                 ]
             ]);
+
             
             if ($response->getStatusCode() != 200) {
                 Log::warning('Failed to fetch lottery results from xosothantai.mobi', [
-                    'date' => $dateStr,
+                    'date' => $date->format('Y-m-d'),
                     'region' => $region,
                     'province' => $province,
                     'status_code' => $response->getStatusCode()
@@ -95,16 +104,30 @@ class LotteryApiService
                 return null;
             }
             
-            $html = (string) $response->getBody();
+            // Phân tích kết quả JSON
+            $jsonResponse = json_decode((string) $response->getBody(), true);
             
             // Log response để debug
             Log::debug('Response from xosothantai.mobi', [
-                'url' => $url,
+                'url' => $ajaxUrl,
                 'status_code' => $response->getStatusCode(),
-                'headers' => $response->getHeaders(),
-                'body_length' => strlen($html),
-                'body_preview' => substr($html, 0, 500)
+                'json_status' => $jsonResponse['stt'] ?? 'unknown',
+                'has_data' => isset($jsonResponse['data']) ? 'yes' : 'no'
             ]);
+            
+            // Kiểm tra xem có dữ liệu hợp lệ không
+            if (!isset($jsonResponse['stt']) || $jsonResponse['stt'] != 1 || !isset($jsonResponse['data'])) {
+                Log::warning('Invalid JSON response from xosothantai.mobi', [
+                    'date' => $date->format('Y-m-d'),
+                    'region' => $region,
+                    'province' => $province,
+                    'response' => $jsonResponse
+                ]);
+                return null;
+            }
+            
+            // Lấy HTML từ phản hồi JSON
+            $html = $jsonResponse['data'];
             
             // Chuyển đổi encoding
             $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
@@ -127,7 +150,7 @@ class LotteryApiService
             }
             
             // Kiểm tra kết quả có hợp lệ không
-            if (!$this->validateResults($results)) {
+            if (!$this->validateResults($results, $region)) {
                 Log::warning('Invalid results format from xosothantai.mobi', [
                     'date' => $date->format('Y-m-d'),
                     'region' => $region,
@@ -172,42 +195,89 @@ class LotteryApiService
             'seventh_prize' => [],
         ];
         
-        // Tìm bảng kết quả
-        $table = $xpath->query("//table[contains(@class, 'table-result')]")->item(0);
-
-        dd($table);
+        // Tìm bảng kết quả - class kqmb là class chính của bảng kết quả miền bắc
+        $table = $xpath->query("//table[contains(@class, 'kqmb')]")->item(0);
         
         if ($table) {
-            // Lấy các giải thưởng
-            $prizes = [
-                'special_prize' => ".//tr[contains(@class, 'gdb')]//td[2]",
-                'first_prize' => ".//tr[contains(@class, 'g1')]//td[2]",
-                'second_prize' => ".//tr[contains(@class, 'g2')]//td[2]",
-                'third_prize' => ".//tr[contains(@class, 'g3')]//td[2]",
-                'fourth_prize' => ".//tr[contains(@class, 'g4')]//td[2]",
-                'fifth_prize' => ".//tr[contains(@class, 'g5')]//td[2]",
-                'sixth_prize' => ".//tr[contains(@class, 'g6')]//td[2]",
-                'seventh_prize' => ".//tr[contains(@class, 'g7')]//td[2]",
-            ];
+            // Lấy giải đặc biệt - sử dụng class v-gdb
+            $specialNodes = $xpath->query(".//span[contains(@class, 'v-gdb')]", $table);
+            if ($specialNodes->length > 0) {
+                $results['special_prize'] = trim($specialNodes->item(0)->textContent);
+            }
             
-            foreach ($prizes as $key => $xpath_query) {
-                $nodes = $xpath->query($xpath_query, $table);
-                foreach ($nodes as $node) {
-                    $number = trim($node->textContent);
-                    if ($number) {
-                        if (in_array($key, ['special_prize', 'first_prize'])) {
-                            $results[$key] = $number;
-                        } else {
-                            $results[$key][] = $number;
-                        }
-                    }
+            // Lấy giải nhất - sử dụng class v-g1
+            $firstNodes = $xpath->query(".//span[contains(@class, 'v-g1')]", $table);
+            if ($firstNodes->length > 0) {
+                $results['first_prize'] = trim($firstNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải nhì - sử dụng class v-g2-0, v-g2-1, etc.
+            $secondNodes = $xpath->query(".//span[starts-with(@class, 'v-g2-')]", $table);
+            foreach ($secondNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['second_prize'][] = $number;
                 }
             }
             
-            return $results;
+            // Lấy giải ba - sử dụng class v-g3-0, v-g3-1, etc.
+            $thirdNodes = $xpath->query(".//span[starts-with(@class, 'v-g3-')]", $table);
+            foreach ($thirdNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['third_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải tư - sử dụng class v-g4-0, v-g4-1, etc.
+            $fourthNodes = $xpath->query(".//span[starts-with(@class, 'v-g4-')]", $table);
+            foreach ($fourthNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['fourth_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải năm - sử dụng class v-g5-0, v-g5-1, etc.
+            $fifthNodes = $xpath->query(".//span[starts-with(@class, 'v-g5-')]", $table);
+            foreach ($fifthNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['fifth_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải sáu - sử dụng class v-g6-0, v-g6-1, etc.
+            $sixthNodes = $xpath->query(".//span[starts-with(@class, 'v-g6-')]", $table);
+            foreach ($sixthNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['sixth_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải bảy - sử dụng class v-g7-0, v-g7-1, etc.
+            $seventhNodes = $xpath->query(".//span[starts-with(@class, 'v-g7-')]", $table);
+            foreach ($seventhNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['seventh_prize'][] = $number;
+                }
+            }
+            
+            // Làm sạch kết quả, loại bỏ các ký tự không phải số
+            foreach ($results as $key => $value) {
+                if (is_array($value)) {
+                    foreach ($value as $k => $v) {
+                        $results[$key][$k] = preg_replace('/[^0-9]/', '', $v);
+                    }
+                } else {
+                    $results[$key] = preg_replace('/[^0-9]/', '', $value);
+                }
+            }
         }
         
-        return null;
+        return $results;
     }
 
     /**
@@ -234,52 +304,171 @@ class LotteryApiService
         ];
         
         // Tìm bảng kết quả cho tỉnh cụ thể
-        $table = null;
-        if ($province) {
-            $tables = $xpath->query("//table[contains(@class, 'table-result')]");
-            foreach ($tables as $t) {
-                $header = $xpath->query(".//tr[contains(@class, 'tentinh')]", $t)->item(0);
-                if ($header && str_contains(strtolower($header->textContent), strtolower($province))) {
-                    $table = $t;
+        $table = $xpath->query("//table[contains(@class, 'colthreecity') or contains(@class, 'coltwocity') or contains(@class, 'colgiai')]")->item(0);
+        
+        if (!$table) {
+            // Thử tìm bằng class khác
+            $table = $xpath->query("//table[contains(@class, 'kqmn')]")->item(0);
+        }
+        
+        if ($table && $province) {
+            // Chuyển đổi mã tỉnh thành tên tỉnh để so sánh
+            $provinceName = $this->getProvinceNameByCode($province, 3); // 3 là region_id cho miền Nam
+            
+            // Tìm cột tương ứng với tỉnh
+            $provinceIndex = -1;
+            $provinceHeaders = $xpath->query(".//th[contains(@data-pid, '')]/a", $table);
+            
+            for ($i = 0; $i < $provinceHeaders->length; $i++) {
+                $header = $provinceHeaders->item($i);
+                if (stripos($header->textContent, $provinceName) !== false) {
+                    $provinceIndex = $i;
                     break;
                 }
             }
-        } else {
-            $table = $xpath->query("//table[contains(@class, 'table-result')]")->item(0);
-        }
-        
-        if ($table) {
-            // Lấy các giải thưởng
-            $prizes = [
-                'eighth_prize' => ".//tr[contains(@class, 'g8')]//td[2]",
-                'seventh_prize' => ".//tr[contains(@class, 'g7')]//td[2]",
-                'sixth_prize' => ".//tr[contains(@class, 'g6')]//td[2]",
-                'fifth_prize' => ".//tr[contains(@class, 'g5')]//td[2]",
-                'fourth_prize' => ".//tr[contains(@class, 'g4')]//td[2]",
-                'third_prize' => ".//tr[contains(@class, 'g3')]//td[2]",
-                'second_prize' => ".//tr[contains(@class, 'g2')]//td[2]",
-                'first_prize' => ".//tr[contains(@class, 'g1')]//td[2]",
-                'special_prize' => ".//tr[contains(@class, 'gdb')]//td[2]",
-            ];
             
-            foreach ($prizes as $key => $xpath_query) {
-                $nodes = $xpath->query($xpath_query, $table);
-                foreach ($nodes as $node) {
+            if ($provinceIndex >= 0) {
+                // Lấy giải đặc biệt (ĐB)
+                $specialNodes = $xpath->query(".//tr[contains(@class, 'gdb')]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-gdb')]", $table);
+                if ($specialNodes->length > 0) {
+                    $results['special_prize'] = trim($specialNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải nhất (G1)
+                $firstNodes = $xpath->query(".//tr[td[text()='G1']]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g1')]", $table);
+                if ($firstNodes->length > 0) {
+                    $results['first_prize'] = trim($firstNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải nhì (G2)
+                $secondNodes = $xpath->query(".//tr[td[text()='G2']]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g2')]", $table);
+                if ($secondNodes->length > 0) {
+                    $results['second_prize'] = trim($secondNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải ba (G3)
+                $thirdNodes = $xpath->query(".//tr[td[text()='G3']]/td[" . ($provinceIndex + 2) . "]//div[starts-with(@class, 'v-g3-')]", $table);
+                foreach ($thirdNodes as $node) {
                     $number = trim($node->textContent);
                     if ($number) {
-                        if (in_array($key, ['special_prize', 'first_prize', 'second_prize', 'fifth_prize', 'seventh_prize', 'eighth_prize'])) {
-                            $results[$key] = $number;
-                        } else {
-                            $results[$key][] = $number;
-                        }
+                        $results['third_prize'][] = $number;
                     }
+                }
+                
+                // Lấy giải tư (G4)
+                $fourthNodes = $xpath->query(".//tr[td[text()='G4']]/td[" . ($provinceIndex + 2) . "]//div[starts-with(@class, 'v-g4-')]", $table);
+                foreach ($fourthNodes as $node) {
+                    $number = trim($node->textContent);
+                    if ($number) {
+                        $results['fourth_prize'][] = $number;
+                    }
+                }
+                
+                // Lấy giải năm (G5)
+                $fifthNodes = $xpath->query(".//tr[td[text()='G5']]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g5')]", $table);
+                if ($fifthNodes->length > 0) {
+                    $results['fifth_prize'] = trim($fifthNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải sáu (G6)
+                $sixthNodes = $xpath->query(".//tr[td[text()='G6']]/td[" . ($provinceIndex + 2) . "]//div[starts-with(@class, 'v-g6-')]", $table);
+                foreach ($sixthNodes as $node) {
+                    $number = trim($node->textContent);
+                    if ($number) {
+                        $results['sixth_prize'][] = $number;
+                    }
+                }
+                
+                // Lấy giải bảy (G7)
+                $seventhNodes = $xpath->query(".//tr[td[text()='G7']]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g7')]", $table);
+                if ($seventhNodes->length > 0) {
+                    $results['seventh_prize'] = trim($seventhNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải tám (G8)
+                $eighthNodes = $xpath->query(".//tr[contains(@class, 'g8')]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g8')]", $table);
+                if ($eighthNodes->length > 0) {
+                    $results['eighth_prize'] = trim($eighthNodes->item(0)->textContent);
+                }
+            }
+        } else if ($table) {
+            // Nếu không có tỉnh cụ thể, lấy kết quả từ cột đầu tiên
+            // Lấy giải đặc biệt (ĐB)
+            $specialNodes = $xpath->query(".//tr[contains(@class, 'gdb')]/td[2]//div[contains(@class, 'v-gdb')]", $table);
+            if ($specialNodes->length > 0) {
+                $results['special_prize'] = trim($specialNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải nhất (G1)
+            $firstNodes = $xpath->query(".//tr[td[text()='G1']]/td[2]//div[contains(@class, 'v-g1')]", $table);
+            if ($firstNodes->length > 0) {
+                $results['first_prize'] = trim($firstNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải nhì (G2)
+            $secondNodes = $xpath->query(".//tr[td[text()='G2']]/td[2]//div[contains(@class, 'v-g2')]", $table);
+            if ($secondNodes->length > 0) {
+                $results['second_prize'] = trim($secondNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải ba (G3)
+            $thirdNodes = $xpath->query(".//tr[td[text()='G3']]/td[2]//div[starts-with(@class, 'v-g3-')]", $table);
+            foreach ($thirdNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['third_prize'][] = $number;
                 }
             }
             
-            return $results;
+            // Lấy giải tư (G4)
+            $fourthNodes = $xpath->query(".//tr[td[text()='G4']]/td[2]//div[starts-with(@class, 'v-g4-')]", $table);
+            foreach ($fourthNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['fourth_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải năm (G5)
+            $fifthNodes = $xpath->query(".//tr[td[text()='G5']]/td[2]//div[contains(@class, 'v-g5')]", $table);
+            if ($fifthNodes->length > 0) {
+                $results['fifth_prize'] = trim($fifthNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải sáu (G6)
+            $sixthNodes = $xpath->query(".//tr[td[text()='G6']]/td[2]//div[starts-with(@class, 'v-g6-')]", $table);
+            foreach ($sixthNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['sixth_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải bảy (G7)
+            $seventhNodes = $xpath->query(".//tr[td[text()='G7']]/td[2]//div[contains(@class, 'v-g7')]", $table);
+            if ($seventhNodes->length > 0) {
+                $results['seventh_prize'] = trim($seventhNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải tám (G8)
+            $eighthNodes = $xpath->query(".//tr[contains(@class, 'g8')]/td[2]//div[contains(@class, 'v-g8')]", $table);
+            if ($eighthNodes->length > 0) {
+                $results['eighth_prize'] = trim($eighthNodes->item(0)->textContent);
+            }
         }
         
-        return null;
+        // Làm sạch kết quả, loại bỏ các ký tự không phải số
+        foreach ($results as $key => $value) {
+            if (is_array($value)) {
+                foreach ($value as $k => $v) {
+                    $results[$key][$k] = preg_replace('/[^0-9]/', '', $v);
+                }
+            } else {
+                $results[$key] = preg_replace('/[^0-9]/', '', $value);
+            }
+        }
+        
+        return $results;
     }
 
     /**
@@ -287,57 +476,237 @@ class LotteryApiService
      */
     private function parseXoSoThanTaiMienTrungResults($html, $province = null)
     {
-        // Sử dụng cùng logic với Miền Nam vì cấu trúc tương tự
-        return $this->parseXoSoThanTaiMienNamResults($html, $province);
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        @$dom->loadHTML($html);
+        libxml_clear_errors();
+        $xpath = new DOMXPath($dom);
+        
+        $results = [
+            'eighth_prize' => '',
+            'seventh_prize' => '',
+            'sixth_prize' => [],
+            'fifth_prize' => '',
+            'fourth_prize' => [],
+            'third_prize' => [],
+            'second_prize' => '',
+            'first_prize' => '',
+            'special_prize' => '',
+        ];
+        
+        // Tìm bảng kết quả cho tỉnh cụ thể
+        $table = $xpath->query("//table[contains(@class, 'colthreecity') or contains(@class, 'coltwocity') or contains(@class, 'colgiai')]")->item(0);
+        
+        if (!$table) {
+            // Thử tìm bằng class khác
+            $table = $xpath->query("//table[contains(@class, 'kqmt')]")->item(0);
+        }
+        
+        if ($table && $province) {
+            // Chuyển đổi mã tỉnh thành tên tỉnh để so sánh
+            $provinceName = $this->getProvinceNameByCode($province, 2); // 2 là region_id cho miền Trung
+            
+            // Tìm cột tương ứng với tỉnh
+            $provinceIndex = -1;
+            $provinceHeaders = $xpath->query(".//th[contains(@data-pid, '')]/a", $table);
+            
+            for ($i = 0; $i < $provinceHeaders->length; $i++) {
+                $header = $provinceHeaders->item($i);
+                if (stripos($header->textContent, $provinceName) !== false) {
+                    $provinceIndex = $i;
+                    break;
+                }
+            }
+            
+            if ($provinceIndex >= 0) {
+                // Lấy giải đặc biệt (ĐB)
+                $specialNodes = $xpath->query(".//tr[contains(@class, 'gdb')]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-gdb')]", $table);
+                if ($specialNodes->length > 0) {
+                    $results['special_prize'] = trim($specialNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải nhất (G1)
+                $firstNodes = $xpath->query(".//tr[td[text()='G1']]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g1')]", $table);
+                if ($firstNodes->length > 0) {
+                    $results['first_prize'] = trim($firstNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải nhì (G2)
+                $secondNodes = $xpath->query(".//tr[td[text()='G2']]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g2')]", $table);
+                if ($secondNodes->length > 0) {
+                    $results['second_prize'] = trim($secondNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải ba (G3)
+                $thirdNodes = $xpath->query(".//tr[td[text()='G3']]/td[" . ($provinceIndex + 2) . "]//div[starts-with(@class, 'v-g3-')]", $table);
+                foreach ($thirdNodes as $node) {
+                    $number = trim($node->textContent);
+                    if ($number) {
+                        $results['third_prize'][] = $number;
+                    }
+                }
+                
+                // Lấy giải tư (G4)
+                $fourthNodes = $xpath->query(".//tr[td[text()='G4']]/td[" . ($provinceIndex + 2) . "]//div[starts-with(@class, 'v-g4-')]", $table);
+                foreach ($fourthNodes as $node) {
+                    $number = trim($node->textContent);
+                    if ($number) {
+                        $results['fourth_prize'][] = $number;
+                    }
+                }
+                
+                // Lấy giải năm (G5)
+                $fifthNodes = $xpath->query(".//tr[td[text()='G5']]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g5')]", $table);
+                if ($fifthNodes->length > 0) {
+                    $results['fifth_prize'] = trim($fifthNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải sáu (G6)
+                $sixthNodes = $xpath->query(".//tr[td[text()='G6']]/td[" . ($provinceIndex + 2) . "]//div[starts-with(@class, 'v-g6-')]", $table);
+                foreach ($sixthNodes as $node) {
+                    $number = trim($node->textContent);
+                    if ($number) {
+                        $results['sixth_prize'][] = $number;
+                    }
+                }
+                
+                // Lấy giải bảy (G7)
+                $seventhNodes = $xpath->query(".//tr[td[text()='G7']]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g7')]", $table);
+                if ($seventhNodes->length > 0) {
+                    $results['seventh_prize'] = trim($seventhNodes->item(0)->textContent);
+                }
+                
+                // Lấy giải tám (G8)
+                $eighthNodes = $xpath->query(".//tr[contains(@class, 'g8')]/td[" . ($provinceIndex + 2) . "]//div[contains(@class, 'v-g8')]", $table);
+                if ($eighthNodes->length > 0) {
+                    $results['eighth_prize'] = trim($eighthNodes->item(0)->textContent);
+                }
+            }
+        } else if ($table) {
+            // Nếu không có tỉnh cụ thể, lấy kết quả từ cột đầu tiên
+            // Lấy giải đặc biệt (ĐB)
+            $specialNodes = $xpath->query(".//tr[contains(@class, 'gdb')]/td[2]//div[contains(@class, 'v-gdb')]", $table);
+            if ($specialNodes->length > 0) {
+                $results['special_prize'] = trim($specialNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải nhất (G1)
+            $firstNodes = $xpath->query(".//tr[td[text()='G1']]/td[2]//div[contains(@class, 'v-g1')]", $table);
+            if ($firstNodes->length > 0) {
+                $results['first_prize'] = trim($firstNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải nhì (G2)
+            $secondNodes = $xpath->query(".//tr[td[text()='G2']]/td[2]//div[contains(@class, 'v-g2')]", $table);
+            if ($secondNodes->length > 0) {
+                $results['second_prize'] = trim($secondNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải ba (G3)
+            $thirdNodes = $xpath->query(".//tr[td[text()='G3']]/td[2]//div[starts-with(@class, 'v-g3-')]", $table);
+            foreach ($thirdNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['third_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải tư (G4)
+            $fourthNodes = $xpath->query(".//tr[td[text()='G4']]/td[2]//div[starts-with(@class, 'v-g4-')]", $table);
+            foreach ($fourthNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['fourth_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải năm (G5)
+            $fifthNodes = $xpath->query(".//tr[td[text()='G5']]/td[2]//div[contains(@class, 'v-g5')]", $table);
+            if ($fifthNodes->length > 0) {
+                $results['fifth_prize'] = trim($fifthNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải sáu (G6)
+            $sixthNodes = $xpath->query(".//tr[td[text()='G6']]/td[2]//div[starts-with(@class, 'v-g6-')]", $table);
+            foreach ($sixthNodes as $node) {
+                $number = trim($node->textContent);
+                if ($number) {
+                    $results['sixth_prize'][] = $number;
+                }
+            }
+            
+            // Lấy giải bảy (G7)
+            $seventhNodes = $xpath->query(".//tr[td[text()='G7']]/td[2]//div[contains(@class, 'v-g7')]", $table);
+            if ($seventhNodes->length > 0) {
+                $results['seventh_prize'] = trim($seventhNodes->item(0)->textContent);
+            }
+            
+            // Lấy giải tám (G8)
+            $eighthNodes = $xpath->query(".//tr[contains(@class, 'g8')]/td[2]//div[contains(@class, 'v-g8')]", $table);
+            if ($eighthNodes->length > 0) {
+                $results['eighth_prize'] = trim($eighthNodes->item(0)->textContent);
+            }
+        }
+        
+        // Làm sạch kết quả, loại bỏ các ký tự không phải số
+        foreach ($results as $key => $value) {
+            if (is_array($value)) {
+                foreach ($value as $k => $v) {
+                    $results[$key][$k] = preg_replace('/[^0-9]/', '', $v);
+                }
+            } else {
+                $results[$key] = preg_replace('/[^0-9]/', '', $value);
+            }
+        }
+        
+        return $results;
     }
     
     /**
-     * Kiểm tra xem kết quả đã có hoặc đã đủ chưa
+     * Lấy tên tỉnh từ mã tỉnh và region_id
      */
-    public function isResultComplete($results)
+    private function getProvinceNameByCode($code, $regionId)
     {
+        $province = \App\Models\Province::where('code', $code)
+            ->where('region_id', $regionId)
+            ->first();
+            
+        return $province ? $province->name : $code;
+    }
+    
+    /**
+     * Kiểm tra xem kết quả có hợp lệ không
+     */
+    private function validateResults($results, $region)
+    {
+        if (!is_array($results)) {
+            return false;
+        }
+        
         // Kiểm tra các giải quan trọng
         if (empty($results['special_prize']) || empty($results['first_prize'])) {
             return false;
         }
         
-        // Kiểm tra số lượng giải
-        if (
-            (isset($results['second_prize']) && count($results['second_prize']) < 1) ||
-            (isset($results['third_prize']) && count($results['third_prize']) < 1) ||
-            (isset($results['fourth_prize']) && count($results['fourth_prize']) < 1)
-        ) {
-            return false;
+        // Kiểm tra cấu trúc dựa trên khu vực
+        if ($region === 'mb') {
+            // Miền Bắc
+            return isset($results['second_prize']) && !empty($results['second_prize']) && 
+                   isset($results['third_prize']) && !empty($results['third_prize']) && 
+                   isset($results['fourth_prize']) && !empty($results['fourth_prize']) && 
+                   isset($results['fifth_prize']) && !empty($results['fifth_prize']) && 
+                   isset($results['sixth_prize']) && !empty($results['sixth_prize']) && 
+                   isset($results['seventh_prize']) && !empty($results['seventh_prize']);
+        } else {
+            // Miền Nam và Miền Trung
+            return isset($results['second_prize']) && 
+                   isset($results['third_prize']) && !empty($results['third_prize']) && 
+                   isset($results['fourth_prize']) && !empty($results['fourth_prize']) && 
+                   isset($results['fifth_prize']) && 
+                   isset($results['sixth_prize']) && !empty($results['sixth_prize']) && 
+                   isset($results['seventh_prize']) && 
+                   isset($results['eighth_prize']);
         }
-        
-        return true;
-    }
-    
-    /**
-     * Làm sạch kết quả, loại bỏ các ký tự không phải số
-     */
-    public function cleanResults($results)
-    {
-        if (!is_array($results)) {
-            return null;
-        }
-        
-        $cleanedResults = [];
-        
-        foreach ($results as $key => $value) {
-            if (is_array($value)) {
-                $cleanedResults[$key] = [];
-                foreach ($value as $subValue) {
-                    // Chỉ giữ lại các ký tự số
-                    $cleanedResults[$key][] = preg_replace('/[^0-9]/', '', $subValue);
-                }
-            } else {
-                // Chỉ giữ lại các ký tự số
-                $cleanedResults[$key] = preg_replace('/[^0-9]/', '', $value);
-            }
-        }
-        
-        return $cleanedResults;
     }
     
     /**
@@ -403,26 +772,5 @@ class LotteryApiService
         }
         
         return $count;
-    }
-    
-    /**
-     * Validate kết quả
-     */
-    private function validateResults($results)
-    {
-        // Kiểm tra các giải thưởng
-        $requiredPrizes = ['special_prize', 'first_prize', 'second_prize', 'third_prize', 'fourth_prize', 'fifth_prize', 'sixth_prize', 'seventh_prize'];
-        foreach ($requiredPrizes as $prize) {
-            if (!isset($results[$prize])) {
-                return false;
-            }
-        }
-        
-        // Kiểm tra số lượng giải
-        if (count($results['second_prize']) < 1 || count($results['third_prize']) < 1 || count($results['fourth_prize']) < 1) {
-            return false;
-        }
-        
-        return true;
     }
 }

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Tính Tiền Số') }}</title>
+    <title>{{ config('app.name', 'Kỹ thuật số') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +25,7 @@
                     <div class="flex">
                         <div class="flex-shrink-0 flex items-center">
                             <a href="{{ route('dashboard') }}" class="text-xl font-bold text-blue-600">
-                                Tính Tiền Số
+                                Kỹ thuật số
                             </a>
                         </div>
                         <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
@@ -38,8 +38,8 @@
                             <a href="{{ route('bets.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('bets*') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">
                                 Danh sách cược
                             </a>
-                            <a href="{{ route('bets.create') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('bets.create') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">
-                                Đặt cược
+                            <a href="{{ route('lottery-results.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('bets.create') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">
+                                KQXS
                             </a>
                             @if(Auth::user()->isAgent())
                             <a href="{{ route('customers.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('customers*') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 focus:outline-none focus:border-blue-700 transition">

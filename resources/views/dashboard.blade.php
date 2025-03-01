@@ -22,10 +22,10 @@
                 <p class="text-sm text-gray-500">Xem danh sách vé cược đã đặt</p>
             </a>
             
-            <a href="{{ route('reports.daily') }}" class="bg-white rounded-lg shadow p-6 border border-gray-200 hover:bg-blue-50 transition-colors">
+            <!-- <a href="" class="bg-white rounded-lg shadow p-6 border border-gray-200 hover:bg-blue-50 transition-colors">
                 <h2 class="text-lg font-medium text-gray-700 mb-2">Báo cáo</h2>
                 <p class="text-sm text-gray-500">Xem các báo cáo tài chính và thống kê</p>
-            </a>
+            </a> -->
         </div>
         
         <!-- Tổng quan -->

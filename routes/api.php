@@ -15,6 +15,11 @@ Route::prefix('lottery')->group(function () {
     Route::get('results', [App\Http\Controllers\LotteryApiController::class, 'getResults']);
 });
 
+Route::prefix('bets')->group(function () {
+    Route::get('process-pending', [App\Http\Controllers\BetController::class, 'processAllPendingBets']);
+    Route::get('provinces-by-date', [App\Http\Controllers\BetController::class, 'getProvincesByDate']);
+});
+
 Route::get('/provinces', function(Request $request) {
     $region = $request->input('region');
     

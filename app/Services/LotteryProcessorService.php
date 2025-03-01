@@ -16,15 +16,20 @@ class LotteryProcessorService
     /**
      * Xử lý tất cả các vé cược cho một kết quả xổ số
      */
-    public function processResult(LotteryResult $result)
+    public function processResult(LotteryResult $result, bool $useTransaction = true)
     {
-        DB::beginTransaction();
+        if ($useTransaction) {
+            DB::beginTransaction();
+        }
         
         try {
             // Lấy tất cả vé cược chưa xử lý cho ngày và tỉnh/khu vực này
             $bets = $this->getBetsForResult($result);
             
             if ($bets->isEmpty()) {
+                if ($useTransaction) {
+                    DB::commit();
+                }
                 return ['status' => 'success', 'message' => 'Không có vé cược nào cần xử lý'];
             }
             
@@ -37,7 +42,9 @@ class LotteryProcessorService
             $result->is_processed = true;
             $result->save();
             
-            DB::commit();
+            if ($useTransaction) {
+                DB::commit();
+            }
             
             return [
                 'status' => 'success', 
@@ -45,7 +52,9 @@ class LotteryProcessorService
                 'processed_count' => $bets->count()
             ];
         } catch (\Exception $e) {
-            DB::rollBack();
+            if ($useTransaction) {
+                DB::rollBack();
+            }
             Log::error('Lỗi xử lý kết quả xổ số: ' . $e->getMessage(), [
                 'result_id' => $result->id,
                 'exception' => $e
@@ -81,7 +90,7 @@ class LotteryProcessorService
     /**
      * Xử lý một vé cược
      */
-    private function processBet(Bet $bet, LotteryResult $result)
+    public function processBet(Bet $bet, LotteryResult $result)
     {
         // Lấy kết quả xổ số
         $resultData = json_decode($result->results, true);

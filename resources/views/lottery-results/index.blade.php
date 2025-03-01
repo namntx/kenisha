@@ -299,11 +299,11 @@
             // Gọi API để lấy kết quả
             let apiUrl = '';
             if (region === 'all') {
-                apiUrl = `/api/lottery/fetch-all?date=${date}&auto_process=${process}`;
+                apiUrl = `/api/lottery/fetch-all?date=${date}&auto_process=${process}&format=json`;
             } else if (province) {
-                apiUrl = `/api/lottery/fetch?date=${date}&region=${region}&province=${province}&auto_process=${process}`;
+                apiUrl = `/api/lottery/fetch?date=${date}&region=${region}&province=${province}&auto_process=${process}&format=json`;
             } else {
-                apiUrl = `/api/lottery/fetch?date=${date}&region=${region}&auto_process=${process}`;
+                apiUrl = `/api/lottery/fetch?date=${date}&region=${region}&auto_process=${process}&format=json`;
             }
             
             fetch(apiUrl)
@@ -316,6 +316,9 @@
                 .then(data => {
                     // Ẩn loading
                     loadingResults.classList.add('hidden');
+
+                    console.log(data);
+                    
                     
                     // Hiển thị thông báo
                     let messageClass = '';
@@ -331,10 +334,12 @@
                     apiMessage.innerHTML = `<p>${data.message || 'Hoàn thành lấy kết quả xổ số'}</p>`;
                     apiMessage.classList.remove('hidden');
                     
-                    // Tải lại trang sau 3 giây
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 3000);
+                    // Chỉ tải lại trang nếu request được gửi từ giao diện người dùng (không phải truy cập trực tiếp từ URL)
+                    // if (!window.location.href.includes('/api/lottery/')) {
+                    //     setTimeout(function() {
+                    //         window.location.reload();
+                    //     }, 3000);
+                    // }
                 })
                 .catch(error => {
                     // Ẩn loading
